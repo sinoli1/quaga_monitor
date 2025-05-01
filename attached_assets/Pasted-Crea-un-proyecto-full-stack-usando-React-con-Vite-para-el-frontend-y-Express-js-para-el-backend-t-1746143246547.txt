@@ -1,0 +1,123 @@
+Crea un proyecto full-stack usando React (con Vite) para el frontend y Express.js para el backend, todo en un solo entorno.
+
+El diseño debe ser futurista, dark mode, tipo glassmorphism/neumorphism, con Tailwind CSS 4.1, sombras suaves, bordes redondeados y responsivo.
+
+El frontend debe tener 2 pestañas con columnas de tarjetas (cards) por fuente de datos:
+
+Pestaña 1:
+
+Columna "Uptime Robot"
+
+Columna "Atera"
+
+Columna "Aruba"
+
+Pestaña 2:
+
+Columna "External Services"
+
+Columna "Backup Alerts"
+
+Cada columna contiene múltiples cards dinámicas, usando componentes React reutilizables.
+
+Los datos se obtienen del backend cada 30 segundos (polling) desde los siguientes endpoints locales:
+
+http://localhost:5000/uptime
+
+http://localhost:5000/atera
+
+http://localhost:5000/aruba
+
+http://localhost:5000/rss (External Services)
+
+http://localhost:5000/gmail (Backup Alerts)
+
+🟢 Formato esperado por sección:
+🔹 Uptime Robot
+Mostrar solo monitores en estado Down o Unknown
+
+Cliente: monitors[i].friendly_name
+
+Monitor ID: clave en monitors[i].monitors_id
+
+Nombre del monitor: monitors[i].monitors_id[monitor_id].friendly_name
+
+Estado: monitors[i].monitors_id[monitor_id].status
+
+Última caída: monitors[i].monitors_id[monitor_id].incidents[0].last_down
+
+URL monitoreada: monitors[i].monitors_id[monitor_id].url
+
+Enlace a estado: monitors[i].custom_url + '/' + monitor_id
+
+🔹 Atera
+Título: alerts[alert_id].DeviceName | CustomerName
+
+Descripción: alerts[alert_id].AlertMessage
+
+Inicio del incidente: alerts[alert_id].incidents[0].created
+
+Tiempo activo: tiempo desde esa fecha si resolved === null
+
+Si el título es "Machine status unknown", esta tarjeta va primera en la columna
+
+🔹 Aruba
+Título: site_name | total_devices_problem / total_devices
+
+Estado general:
+
+Crítico si total_devices_problem == total_devices
+
+Parcial en otros casos
+
+Por cada device problem:
+
+Nombre del device: device_name (model)
+
+IP, MAC, Estado, Última conexión, segundos sin comunicar
+
+🔹 Backup Alerts (Gmail)
+Cliente: clave principal del objeto
+
+Estado del backup: Estado
+
+Fecha de envío: FechaEnvio
+
+Resumen del error: inicio de Cuerpo
+
+Expandible: Cuerpo completo
+
+🔹 External Services (RSS)
+Una card por servicio en $.services
+
+Nombre del servicio: clave
+
+Estado: verde ("Up" → "Operacional") o rojo ("Down" → "Fuera de servicio")
+
+Link a su página de estado (según el servicio)
+
+$.timestamp como “Última actualización”
+
+Servicios y enlaces:
+
+No-IP: https://status.noip.com/
+
+AnyDesk: https://status.anydesk.com/
+
+Freshdesk: https://updates.freshdesk.com/
+
+UptimeRobot: https://status.uptimerobot.com/
+
+Slack: https://slack-status.com/
+
+Google Workspace: https://www.google.com/appsstatus/dashboard/
+
+NextDNS: https://ping.nextdns.io/
+
+Google Cloud: https://status.cloud.google.com/
+
+Usa lucide-react para íconos y framer-motion para animaciones suaves.
+
+No renderices HTML plano: todo debe estar basado en componentes React funcionales modernos.
+
+Mantén el código modular, reutilizable y legible.
