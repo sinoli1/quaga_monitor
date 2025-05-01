@@ -1,0 +1,116 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --background: 217 33% 11%;
+    --foreground: 210 20% 98%;
+    
+    --card: 215 25% 17% / 0.6;
+    --card-foreground: 210 20% 98%;
+    
+    --popover: 217 33% 11%;
+    --popover-foreground: 210 20% 98%;
+    
+    --primary: 270 90% 80%;
+    --primary-foreground: 0 0% 100%;
+    
+    --secondary: 160 84% 39%;
+    --secondary-foreground: 0 0% 100%;
+    
+    --muted: 217 33% 17%;
+    --muted-foreground: 215 20% 65%;
+    
+    --accent: 217 90% 57%;
+    --accent-foreground: 0 0% 100%;
+    
+    --destructive: 0 84% 60%;
+    --destructive-foreground: 0 0% 100%;
+    
+    --border: 0 0% 100% / 0.08;
+    --input: 217 33% 17%;
+    --ring: 270 90% 80%;
+
+    --chart-1: 270 90% 80%;
+    --chart-2: 160 84% 39%;
+    --chart-3: 217 90% 57%;
+    --chart-4: 0 84% 60%;
+    --chart-5: 35 92% 65%;
+    
+    --radius: 0.75rem;
+  }
+  
+  * {
+    @apply border-border;
+  }
+  
+  body {
+    @apply font-sans antialiased bg-background text-foreground;
+    background-image: 
+      radial-gradient(circle at 10% 20%, rgba(139, 92, 246, 0.1) 0%, transparent 20%),
+      radial-gradient(circle at 90% 80%, rgba(59, 130, 246, 0.1) 0%, transparent 20%);
+    background-size: 100% 100%;
+    background-attachment: fixed;
+  }
+}
+
+@layer components {
+  .glass-card {
+    @apply bg-card backdrop-blur-md border border-border shadow-lg;
+  }
+  
+  .status-pulse {
+    @apply relative;
+  }
+  
+  .status-pulse::before {
+    content: '';
+    @apply absolute inset-0 -z-10 rounded-full animate-pulse;
+    animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+  }
+  
+  .status-badge {
+    @apply flex items-center px-2 py-1 text-xs rounded-full;
+  }
+  
+  .status-badge-dot {
+    @apply h-2 w-2 rounded-full mr-1;
+  }
+  
+  .status-success {
+    @apply bg-secondary/20 text-secondary;
+  }
+  
+  .status-success .status-badge-dot {
+    @apply bg-secondary;
+  }
+  
+  .status-error {
+    @apply bg-destructive/20 text-destructive;
+  }
+  
+  .status-error .status-badge-dot {
+    @apply bg-destructive status-pulse;
+  }
+  
+  .status-warning {
+    @apply bg-yellow-500/20 text-yellow-400;
+  }
+  
+  .status-warning .status-badge-dot {
+    @apply bg-yellow-500 status-pulse;
+  }
+  
+  .status-unknown {
+    @apply bg-purple-500/20 text-purple-400;
+  }
+  
+  .status-unknown .status-badge-dot {
+    @apply bg-purple-500 status-pulse;
+  }
+  
+  .tab-active {
+    @apply border-b-2 border-primary text-white;
+  }
+}

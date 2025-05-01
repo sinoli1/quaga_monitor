@@ -1,0 +1,108 @@
+import { TriangleAlert, ArrowRightIcon } from "lucide-react";
+import DashboardCard from "@/components/Dashboard/Card";
+import UptimeRobotCard from "@/components/Cards/UptimeRobotCard";
+import { UptimeMonitor } from "@/types";
+import { Skeleton } from "@/components/ui/skeleton";
+
+interface UptimeRobotColumnProps {
+  data: UptimeMonitor[] | undefined;
+  isLoading: boolean;
+  error: Error | null;
+}
+
+const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) => {
+  // Filter for monitors with Down or Unknown status
+  const filteredMonitors = data?.flatMap(monitor => {
+    const clientName = monitor.friendly_name;
+    
+    return Object.entries(monitor.monitors_id)
+      .filter(([_, details]) => ['Down', 'Unknown'].includes(details.status))
+      .map(([monitorId, details]) => ({
+        clientName,
+        monitorId,
+        monitorName: details.friendly_name,
+        status: details.status,
+        lastDown: details.incidents[0]?.last_down || 'Unknown',
+        url: details.url,
+        statusUrl: monitor.custom_url + '/' + monitorId
+      }));
+  }) || [];
+
+  return (
+    <div className="space-y-4">
+      <div className="flex items-center justify-between">
+        <h2 className="text-lg font-semibold flex items-center">
+          <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+          Uptime Robot
+        </h2>
+        {!isLoading && !error && (
+          <span className="text-xs text-gray-400">
+            {filteredMonitors.length} {filteredMonitors.length === 1 ? 'incident' : 'incidents'}
+          </span>
+        )}
+      </div>
+      
+      {isLoading && (
+        <>
+          <LoadingSkeleton />
+          <LoadingSkeleton />
+        </>
+      )}
+      
+      {error && (
+        <DashboardCard>
+          <div className="flex items-center text-destructive gap-2">
+            <TriangleAlert className="h-5 w-5" />
+            <span>Failed to load Uptime Robot data</span>
+          </div>
+        </DashboardCard>
+      )}
+      
+      {!isLoading && !error && filteredMonitors.length === 0 && (
+        <EmptyState />
+      )}
+      
+      {!isLoading && !error && filteredMonitors.length > 0 && (
+        filteredMonitors.map((monitor, index) => (
+          <UptimeRobotCard
+            key={`${monitor.monitorId}-${index}`}
+            clientName={monitor.clientName}
+            monitorName={monitor.monitorName}
+            status={monitor.status}
+            lastDown={monitor.lastDown}
+            url={monitor.url}
+            statusUrl={monitor.statusUrl}
+          />
+        ))
+      )}
+    </div>
+  );
+};
+
+const LoadingSkeleton = () => (
+  <DashboardCard>
+    <div className="space-y-3">
+      <div className="flex justify-between">
+        <Skeleton className="h-6 w-32" />
+        <Skeleton className="h-6 w-20" />
+      </div>
+      <div className="space-y-2">
+        <Skeleton className="h-4 w-full" />
+        <Skeleton className="h-4 w-3/4" />
+        <Skeleton className="h-4 w-5/6" />
+      </div>
+    </div>
+  </DashboardCard>
+);
+
+const EmptyState = () => (
+  <DashboardCard>
+    <div className="flex flex-col items-center py-6">
+      <ArrowRightIcon className="text-gray-500 mb-4 h-12 w-12" />
+      <p className="text-gray-400 mb-1">All monitors are up</p>
+      <p className="text-xs text-gray-500">No incidents detected</p>
+    </div>
+  </DashboardCard>
+);
+
+export default UptimeRobotColumn;
