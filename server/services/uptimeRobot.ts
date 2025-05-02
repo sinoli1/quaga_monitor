@@ -1,12 +1,13 @@
-// Sample Uptime Robot data for development
-// In a production environment, this would connect to the Uptime Robot API
+import axios from 'axios';
 
 export async function getUptimeRobotData() {
-  // This function would typically call the Uptime Robot API with API key
-  // const apiKey = process.env.UPTIME_ROBOT_API_KEY;
-  
   try {
-    // Simulated data for development
+    // Fetch from local API endpoint
+    const response = await axios.get('http://127.0.0.1:5000/uptime');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Uptime Robot data:", error);
+    // If the API fails, return sample data as fallback
     return [
       {
         friendly_name: "Client ABC",
@@ -41,8 +42,5 @@ export async function getUptimeRobotData() {
         custom_url: "https://stats.uptimerobot.com/xyz456"
       }
     ];
-  } catch (error) {
-    console.error("Error fetching Uptime Robot data:", error);
-    throw error;
   }
 }

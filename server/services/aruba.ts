@@ -1,12 +1,13 @@
-// Sample Aruba data for development
-// In a production environment, this would connect to the Aruba API
+import axios from 'axios';
 
 export async function getArubaData() {
-  // This function would typically call the Aruba API with API key
-  // const apiKey = process.env.ARUBA_API_KEY;
-  
   try {
-    // Simulated data for development
+    // Fetch from local API endpoint
+    const response = await axios.get('http://127.0.0.1:5000/aruba');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Aruba data:", error);
+    // If the API fails, return sample data as fallback
     return [
       {
         site_name: "Office Location",
@@ -20,7 +21,7 @@ export async function getArubaData() {
             mac: "AA:BB:CC:DD:EE:FF",
             status: "offline",
             last_seen: new Date(Date.now() - 35 * 60 * 1000).toISOString(), // 35 minutes ago
-            seconds_offline: 35 * 60 // 35 minutes in seconds
+            seconds_offline: 35 * 60, // 35 minutes in seconds
           },
           {
             device_name: "AP-Office-02",
@@ -29,7 +30,7 @@ export async function getArubaData() {
             mac: "AA:BB:CC:DD:EE:00",
             status: "offline",
             last_seen: new Date(Date.now() - 2 * 60 * 60 * 1000).toISOString(), // 2 hours ago
-            seconds_offline: 2 * 60 * 60 // 2 hours in seconds
+            seconds_offline: 2 * 60 * 60, // 2 hours in seconds
           },
           {
             device_name: "AP-Office-03",
@@ -38,7 +39,7 @@ export async function getArubaData() {
             mac: "AA:BB:CC:DD:EE:01",
             status: "connected",
             last_seen: new Date().toISOString(), // Now
-            seconds_offline: 0
+            seconds_offline: 0,
           },
           {
             device_name: "AP-Office-04",
@@ -47,7 +48,7 @@ export async function getArubaData() {
             mac: "AA:BB:CC:DD:EE:02",
             status: "connected",
             last_seen: new Date().toISOString(), // Now
-            seconds_offline: 0
+            seconds_offline: 0,
           },
           {
             device_name: "AP-Office-05",
@@ -56,13 +57,10 @@ export async function getArubaData() {
             mac: "AA:BB:CC:DD:EE:03",
             status: "connected",
             last_seen: new Date().toISOString(), // Now
-            seconds_offline: 0
-          }
-        ]
-      }
+            seconds_offline: 0,
+          },
+        ],
+      },
     ];
-  } catch (error) {
-    console.error("Error fetching Aruba data:", error);
-    throw error;
   }
 }

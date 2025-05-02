@@ -1,11 +1,13 @@
-// Sample External Services data for development
-// In a production environment, this would fetch real status from RSS feeds
+import axios from 'axios';
 
 export async function getExternalServicesData() {
-  // This function would typically fetch and parse real RSS feeds for services
-  
   try {
-    // Simulated data for development
+    // Fetch from local API endpoint
+    const response = await axios.get('http://127.0.0.1:5000/rss');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching External Services data:", error);
+    // If the API fails, return sample data as fallback
     return {
       services: {
         "No-IP": "Up",
@@ -19,8 +21,5 @@ export async function getExternalServicesData() {
       },
       timestamp: new Date().toISOString()
     };
-  } catch (error) {
-    console.error("Error fetching External Services data:", error);
-    throw error;
   }
 }

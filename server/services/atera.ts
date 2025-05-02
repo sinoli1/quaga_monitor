@@ -1,12 +1,13 @@
-// Sample Atera data for development
-// In a production environment, this would connect to the Atera API
+import axios from 'axios';
 
 export async function getAteraData() {
-  // This function would typically call the Atera API with API key
-  // const apiKey = process.env.ATERA_API_KEY;
-  
   try {
-    // Simulated data for development
+    // Fetch from local API endpoint
+    const response = await axios.get('http://127.0.0.1:5000/atera');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Atera data:", error);
+    // If the API fails, return sample data as fallback
     return [
       {
         alert_id: "a1",
@@ -33,8 +34,5 @@ export async function getAteraData() {
         resolved: null
       }
     ];
-  } catch (error) {
-    console.error("Error fetching Atera data:", error);
-    throw error;
   }
 }

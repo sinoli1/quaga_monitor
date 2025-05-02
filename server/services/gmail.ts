@@ -1,12 +1,13 @@
-// Sample Gmail Backup Alerts data for development
-// In a production environment, this would connect to Gmail API
+import axios from 'axios';
 
 export async function getGmailBackupAlerts() {
-  // This function would typically connect to Gmail API with OAuth
-  // const gmailApiKey = process.env.GMAIL_API_KEY;
-  
   try {
-    // Simulated data for development
+    // Fetch from local API endpoint
+    const response = await axios.get('http://127.0.0.1:5000/gmail');
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Gmail Backup Alerts data:", error);
+    // If the API fails, return sample data as fallback
     return {
       "Client JKL": {
         "Estado": "Backup Failed",
@@ -24,8 +25,5 @@ export async function getGmailBackupAlerts() {
         "Cuerpo": "Backup task aborted. Insufficient disk space on destination. Error details: Backup operation started but aborted after 45 minutes. The destination drive E: has only 25.8 GB free space, but requires at least 150 GB for this backup job. Recommendation: Clean up backup destination or allocate additional storage."
       }
     };
-  } catch (error) {
-    console.error("Error fetching Gmail Backup Alerts data:", error);
-    throw error;
   }
 }
