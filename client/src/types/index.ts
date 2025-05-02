@@ -78,3 +78,13 @@ export interface StatusSummary {
   warning: number;
   operational: number;
 }
+
+// WebSocket Types
+export interface WebSocketMonitoringData {
+  uptime: UptimeMonitor[] | null;
+  atera: AteraAlert[] | null;
+  aruba: ArubaSite[] | null;
+  rss: ExternalServices | null;
+  gmail: BackupAlerts | null;
+  timestamp: string;
+}
