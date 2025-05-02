@@ -10,11 +10,13 @@ const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
 
   return (
     <div className="space-y-2 p-3 rounded-lg bg-background/50">
-      <div className="flex justify-between items-center">
+      <div className="flex flex-wrap gap-2 justify-between items-center">
         <h3 className="font-medium text-sm">{service.name}</h3>
-        <div className={`status-badge ${isOperational ? 'status-success' : 'status-error'}`}>
+        <div className={`status-badge ${isOperational ? 'status-success' : 'status-error'} min-w-min truncate`}>
           <span className="status-badge-dot"></span>
-          {service.statusText}
+          <span className="truncate">
+            {isOperational ? "Operacional" : "Fuera de servicio"}
+          </span>
         </div>
       </div>
       <a 
@@ -23,7 +25,7 @@ const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
         rel="noopener noreferrer"
         className="text-xs text-primary flex items-center hover:underline"
       >
-        Status page
+        Página de estado
         <ExternalLinkIcon className="ml-1 h-3 w-3" />
       </a>
     </div>

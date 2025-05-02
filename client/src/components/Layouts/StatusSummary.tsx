@@ -5,29 +5,30 @@ interface StatusSummaryProps {
   warning: number;
   operational: number;
   countdown: number;
+  className?: string;
 }
 
-const StatusSummary = ({ critical, warning, operational, countdown }: StatusSummaryProps) => {
+const StatusSummary = ({ critical, warning, operational, countdown, className = "" }: StatusSummaryProps) => {
   return (
-    <footer className="mt-8 pt-6 border-t border-gray-800 flex justify-between items-center text-sm text-gray-400">
+    <div className={`flex justify-between items-center text-sm text-gray-400 bg-background/30 backdrop-blur-sm p-3 rounded-lg ${className}`}>
       <div className="flex flex-wrap gap-4">
         <div className="flex items-center">
           <span className="w-2 h-2 bg-red-500 rounded-full mr-2"></span>
-          <span>Critical: {critical}</span>
+          <span>Crítico: {critical}</span>
         </div>
         <div className="flex items-center">
           <span className="w-2 h-2 bg-yellow-500 rounded-full mr-2"></span>
-          <span>Warning: {warning}</span>
+          <span>Advertencia: {warning}</span>
         </div>
         <div className="flex items-center">
           <span className="w-2 h-2 bg-green-500 rounded-full mr-2"></span>
-          <span>Operational: {operational}</span>
+          <span>Operacional: {operational}</span>
         </div>
       </div>
       
       <div>
         <span>
-          Next refresh in <motion.span 
+          Próxima actualización en <motion.span 
             key={countdown}
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
@@ -37,7 +38,7 @@ const StatusSummary = ({ critical, warning, operational, countdown }: StatusSumm
           </motion.span>
         </span>
       </div>
-    </footer>
+    </div>
   );
 };
 

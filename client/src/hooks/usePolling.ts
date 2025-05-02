@@ -1,10 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect } from "react";
+import { 
+  UptimeMonitor, 
+  AteraAlert, 
+  ArubaSite, 
+  ExternalServices,
+  BackupAlerts 
+} from "@/types";
 
-export function usePolling<T>(url: string, interval: number = 30000) {
+type ApiResponseType<T extends string> = 
+  T extends "/uptime" ? UptimeMonitor[] :
+  T extends "/atera" ? AteraAlert[] :
+  T extends "/aruba" ? ArubaSite[] :
+  T extends "/rss" ? ExternalServices :
+  T extends "/gmail" ? BackupAlerts :
+  unknown;
+
+export function usePolling<T extends string>(url: T, interval: number = 30000) {
   const [countdown, setCountdown] = useState(interval / 1000);
 
-  const query = useQuery<T>({
+  const query = useQuery<ApiResponseType<T>>({
     queryKey: [url],
     refetchInterval: interval,
     refetchIntervalInBackground: true,

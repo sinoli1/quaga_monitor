@@ -8,11 +8,11 @@ import ExternalServicesColumn from "@/components/Columns/ExternalServicesColumn"
 import BackupAlertsColumn from "@/components/Columns/BackupAlertsColumn";
 import StatusSummary from "@/components/Layouts/StatusSummary";
 import { usePolling } from "@/hooks/usePolling";
-import { StatusSummary as StatusSummaryType } from "@/types";
+import { StatusSummary as StatusSummaryType, BackupAlerts } from "@/types";
 
 const tabs = [
-  { id: "infrastructure", label: "Infrastructure Status" },
-  { id: "services", label: "Services & Alerts" },
+  { id: "infrastructure", label: "Estado de Infraestructura" },
+  { id: "services", label: "Servicios y Alertas" },
 ];
 
 function Dashboard() {
@@ -33,7 +33,7 @@ function Dashboard() {
     
     // Count services in external services
     if (externalServicesQuery.data) {
-      const services = externalServicesQuery.data.services;
+      const services = externalServicesQuery.data.services || {};
       Object.keys(services).forEach(service => {
         if (services[service] === 'Up') operational++;
         else critical++;
@@ -41,9 +41,9 @@ function Dashboard() {
     }
     
     // Count uptime monitors
-    if (uptimeQuery.data) {
-      uptimeQuery.data.forEach((monitor: any) => {
-        Object.keys(monitor.monitors_id).forEach(monitorId => {
+    if (uptimeQuery.data && Array.isArray(uptimeQuery.data)) {
+      uptimeQuery.data.forEach((monitor) => {
+        Object.keys(monitor.monitors_id || {}).forEach(monitorId => {
           if (monitor.monitors_id[monitorId].status === 'Down') critical++;
           else if (monitor.monitors_id[monitorId].status === 'Unknown') warning++;
         });
@@ -51,16 +51,16 @@ function Dashboard() {
     }
     
     // Count atera alerts
-    if (ateraQuery.data) {
-      ateraQuery.data.forEach((alert: any) => {
+    if (ateraQuery.data && Array.isArray(ateraQuery.data)) {
+      ateraQuery.data.forEach((alert) => {
         if (alert.AlertMessage.includes("Machine status unknown")) warning++;
         else critical++;
       });
     }
     
     // Count aruba devices
-    if (arubaQuery.data) {
-      arubaQuery.data.forEach((site: any) => {
+    if (arubaQuery.data && Array.isArray(arubaQuery.data)) {
+      arubaQuery.data.forEach((site) => {
         critical += site.total_devices_problem;
         operational += site.total_devices - site.total_devices_problem;
       });
@@ -68,9 +68,10 @@ function Dashboard() {
     
     // Count backup alerts
     if (backupAlertsQuery.data) {
-      Object.keys(backupAlertsQuery.data).forEach(client => {
-        if (backupAlertsQuery.data[client].Estado.includes("Failed")) critical++;
-        else if (backupAlertsQuery.data[client].Estado.includes("Warning")) warning++;
+      const backupData = backupAlertsQuery.data as BackupAlerts;
+      Object.keys(backupData).forEach(client => {
+        if (backupData[client].Estado.includes("Failed")) critical++;
+        else if (backupData[client].Estado.includes("Warning")) warning++;
       });
     }
     
@@ -87,18 +88,26 @@ function Dashboard() {
   return (
     <div className="min-h-screen w-full">
       <div className="container mx-auto px-4 py-8">
-        <header className="mb-8">
+        <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center">
-            <span className="text-primary mr-2">Service Monitoring</span>
-            <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-md ml-2">LIVE</span>
+            <span className="text-primary mr-2">Monitoreo de Servicios</span>
+            <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-md ml-2">EN VIVO</span>
           </h1>
           <div className="flex items-center text-sm text-gray-400 mb-4">
             <span className="flex items-center">
               <span className="h-2 w-2 bg-secondary rounded-full animate-pulse mr-2"></span>
-              <span>Last updated: {lastUpdated}</span>
+              <span>Última actualización: {lastUpdated}</span>
             </span>
-            <span className="ml-4">Auto-refresh: {uptimeQuery.secondsUntilRefetch}s</span>
           </div>
+          
+          {/* Status Summary at top */}
+          <StatusSummary 
+            critical={statusSummary.critical}
+            warning={statusSummary.warning}
+            operational={statusSummary.operational}
+            countdown={uptimeQuery.secondsUntilRefetch}
+            className="mb-4"
+          />
         </header>
 
         <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
@@ -131,13 +140,6 @@ function Dashboard() {
             </div>
           )}
         </motion.div>
-
-        <StatusSummary 
-          critical={statusSummary.critical}
-          warning={statusSummary.warning}
-          operational={statusSummary.operational}
-          countdown={uptimeQuery.secondsUntilRefetch}
-        />
       </div>
     </div>
   );
