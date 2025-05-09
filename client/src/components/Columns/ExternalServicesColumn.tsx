@@ -1,9 +1,20 @@
-import { TriangleAlert, ServerIcon } from "lucide-react";
+import { TriangleAlert, ServerIcon, Cog } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import ExternalServiceCard from "@/components/Cards/ExternalServiceCard";
 import { ExternalServices, ServiceStatus } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { format } from "date-fns";
+import {
+  SiGoogle,
+  SiSlack,
+  SiNextdns,
+  SiCodefresh,
+  SiAnydesk,
+  SiGooglecloud
+} from "react-icons/si";
+import { RiProhibited2Line } from "react-icons/ri";
+import { FaCircleDot } from "react-icons/fa6";
+
 
 interface ExternalServicesColumnProps {
   data: ExternalServices | undefined;
@@ -11,7 +22,6 @@ interface ExternalServicesColumnProps {
   error: Error | null;
 }
 
-// Define external services with their status pages
 const serviceUrls: Record<string, string> = {
   "No-IP": "https://status.noip.com/",
   "AnyDesk": "https://status.anydesk.com/",
@@ -23,16 +33,26 @@ const serviceUrls: Record<string, string> = {
   "Google Cloud": "https://status.cloud.google.com/"
 };
 
+const serviceIcons: Record<string, JSX.Element> = {
+  "No-IP": <RiProhibited2Line className="text-lg text-green-600 mr-2" />,
+  "AnyDesk": <SiAnydesk className="text-lg text-red-300 mr-2" />,
+  "Freshdesk": <SiCodefresh className="text-lg text-blue-300 mr-2" />,
+  "UptimeRobot": <FaCircleDot className="text-lg text-green-300 mr-2" />,
+  "Slack": <SiSlack className="text-lg text-yellow-300 mr-2" />,
+  "Google Workspace": <SiGoogle className="text-lg text-orange-300 mr-2" />,
+  "NextDNS": <SiNextdns className="text-lg text-blue-300 mr-2" />,
+  "Google Cloud": <SiGooglecloud className="text-lg text-orange-300 mr-2" />
+};
+
 const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColumnProps) => {
-  // Transform raw data to service status objects
   const serviceStatuses: ServiceStatus[] = !data ? [] : Object.entries(data.services).map(([name, status]) => ({
     name,
     status,
     statusText: status === "Up" ? "Operacional" : "Fuera de servicio",
-    statusUrl: serviceUrls[name] || "#"
+    statusUrl: serviceUrls[name] || "#",
+    icon: serviceIcons[name]
   }));
 
-  // Format the last updated timestamp
   const lastUpdated = data?.timestamp 
     ? format(new Date(data.timestamp), 'MMM d, h:mm a')
     : 'Unknown';
@@ -40,15 +60,15 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center">
-          <span className="w-3 h-3 bg-green-500 rounded-full mr-2"></span>
+        <h2 className="text-xl font-semibold flex items-center">
+          <Cog className="w-6 h-6 text-green-500 mr-2" />
           External Services
         </h2>
         {!isLoading && !error && data && (
-          <span className="text-xs text-gray-400">Updated {lastUpdated}</span>
+          <span className="text-sm text-blue-400 bg--500/20 px-2 py-0.5 rounded-full">Updated {lastUpdated}</span>
         )}
       </div>
-      
+
       {isLoading && (
         <DashboardCard>
           <div className="grid grid-cols-2 gap-4">
@@ -58,7 +78,7 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
           </div>
         </DashboardCard>
       )}
-      
+
       {error && (
         <DashboardCard>
           <div className="flex items-center text-destructive gap-2">
@@ -67,11 +87,11 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
           </div>
         </DashboardCard>
       )}
-      
+
       {!isLoading && !error && serviceStatuses.length === 0 && (
         <EmptyState />
       )}
-      
+
       {!isLoading && !error && serviceStatuses.length > 0 && (
         <DashboardCard>
           <div className="grid grid-cols-2 gap-4">

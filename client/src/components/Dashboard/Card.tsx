@@ -9,11 +9,11 @@ interface DashboardCardProps {
   highlightColor?: string;
 }
 
-const DashboardCard = ({ 
-  children, 
-  className = "", 
+const DashboardCard = ({
+  children,
+  className = "",
   highlightBorder = false,
-  highlightColor = "border-yellow-500/30"
+  highlightColor = "border-yellow-500/30",
 }: DashboardCardProps) => {
   return (
     <motion.div
@@ -21,8 +21,10 @@ const DashboardCard = ({
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3 }}
     >
-      <Card 
-        className={`glass-card rounded-xl p-4 shadow-lg ${highlightBorder ? `border ${highlightColor}` : ''} ${className}`}
+      <Card
+        className={`glass-card rounded-2xl p-5 shadow-xl transition-all duration-300 ease-in-out ${
+          highlightBorder ? `border ${highlightColor}` : ""
+        } ${className}`}
       >
         {children}
       </Card>

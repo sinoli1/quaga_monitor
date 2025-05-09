@@ -1,4 +1,4 @@
-import { TriangleAlert, ArrowRightIcon } from "lucide-react";
+import { TriangleAlert, ArrowRightIcon, Globe } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import UptimeRobotCard from "@/components/Cards/UptimeRobotCard";
 import { UptimeMonitor } from "@/types";
@@ -11,12 +11,13 @@ interface UptimeRobotColumnProps {
 }
 
 const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) => {
-  // Filter for monitors with Down or Unknown status
-  const filteredMonitors = data?.flatMap(monitor => {
+  // Filtrar monitores con estado Down
+  const filteredMonitors = data?.monitors?.flatMap(monitor => {
     const clientName = monitor.friendly_name;
-    
+    const isCritical = monitor.monitor_down === monitor.monitor_total;
+
     return Object.entries(monitor.monitors_id)
-      .filter(([_, details]) => ['Down', 'Unknown'].includes(details.status))
+      .filter(([_, details]) => ['Down'].includes(details.status))
       .map(([monitorId, details]) => ({
         clientName,
         monitorId,
@@ -24,31 +25,32 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
         status: details.status,
         lastDown: details.incidents[0]?.last_down || 'Unknown',
         url: details.url,
-        statusUrl: monitor.custom_url + '/' + monitorId
+        statusUrl: monitor.custom_url + '/' + monitorId,
+        isCritical
       }));
   }) || [];
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center">
-          <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
+        <h2 className="text-xl font-semibold flex items-center">
+          <Globe className="w-6 h-6 text-blue-500 mr-2" />
           Uptime Robot
         </h2>
         {!isLoading && !error && (
-          <span className="text-xs text-gray-400">
+          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
             {filteredMonitors.length} {filteredMonitors.length === 1 ? 'incident' : 'incidents'}
           </span>
         )}
       </div>
-      
+
       {isLoading && (
         <>
           <LoadingSkeleton />
           <LoadingSkeleton />
         </>
       )}
-      
+
       {error && (
         <DashboardCard>
           <div className="flex items-center text-destructive gap-2">
@@ -57,11 +59,11 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
           </div>
         </DashboardCard>
       )}
-      
+
       {!isLoading && !error && filteredMonitors.length === 0 && (
         <EmptyState />
       )}
-      
+
       {!isLoading && !error && filteredMonitors.length > 0 && (
         filteredMonitors.map((monitor, index) => (
           <UptimeRobotCard
@@ -72,6 +74,7 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
             lastDown={monitor.lastDown}
             url={monitor.url}
             statusUrl={monitor.statusUrl}
+            isCritical={monitor.isCritical} // 💥 Nuevo prop
           />
         ))
       )}

@@ -1,16 +1,17 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
-import { getUptimeRobotData } from "./services/uptimeRobot";
-import { getAteraData } from "./services/atera";
-import { getArubaData } from "./services/aruba";
-import { getExternalServicesData } from "./services/externalServices";
-import { getGmailBackupAlerts } from "./services/gmail";
+import {
+  getUptimeRobotController,
+  getAteraController,
+  getArubaController,
+  getExternalServicesController,
+  getGmailBackupAlertsController
+} from "./controllers/monitoring";
 
 export async function registerRoutes(app: Express): Promise<Server> {
-  // Uptime Robot data endpoint
   app.get("/uptime", async (_req, res) => {
     try {
-      const data = await getUptimeRobotData();
+      const data = await getUptimeRobotController();
       res.json(data);
     } catch (error) {
       console.error("Error fetching Uptime Robot data:", error);
@@ -18,10 +19,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Atera data endpoint
   app.get("/atera", async (_req, res) => {
     try {
-      const data = await getAteraData();
+      const data = await getAteraController();
       res.json(data);
     } catch (error) {
       console.error("Error fetching Atera data:", error);
@@ -29,10 +29,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Aruba data endpoint
   app.get("/aruba", async (_req, res) => {
     try {
-      const data = await getArubaData();
+      const data = await getArubaController();
       res.json(data);
     } catch (error) {
       console.error("Error fetching Aruba data:", error);
@@ -40,10 +39,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // External Services (RSS) data endpoint
   app.get("/rss", async (_req, res) => {
     try {
-      const data = await getExternalServicesData();
+      const data = await getExternalServicesController();
       res.json(data);
     } catch (error) {
       console.error("Error fetching External Services data:", error);
@@ -51,10 +49,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Gmail Backup Alerts data endpoint
   app.get("/gmail", async (_req, res) => {
     try {
-      const data = await getGmailBackupAlerts();
+      const data = await getGmailBackupAlertsController();
       res.json(data);
     } catch (error) {
       console.error("Error fetching Gmail Backup Alerts data:", error);

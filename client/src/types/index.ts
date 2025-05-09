@@ -59,6 +59,7 @@ export interface ServiceStatus {
   status: string;
   statusText: string;
   statusUrl: string;
+  icon?: JSX.Element; 
 }
 
 // Backup Alerts types

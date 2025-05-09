@@ -5,36 +5,30 @@ import { ArubaSite } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface ArubaColumnProps {
-  data: ArubaSite[] | undefined;
+  data: { data: ArubaSite[]; timestamp: string } | undefined;
   isLoading: boolean;
   error: Error | null;
 }
 
 const ArubaColumn = ({ data, isLoading, error }: ArubaColumnProps) => {
+  const affectedSites = data?.data.filter(site => site.total_devices_problem > 0) || [];
+
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center">
-          <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
-          Aruba
-        </h2>
-        {!isLoading && !error && data && (
-          <span className="text-xs text-gray-400">
-            {data.filter(site => site.total_devices_problem > 0).length} {
-              data.filter(site => site.total_devices_problem > 0).length === 1 
-                ? 'site affected' 
-                : 'sites affected'
-            }
+      <h2 className="text-xl font-semibold flex items-center">
+        <WifiIcon className="w-6 h-6 text-green-600 mr-2" />
+        Aruba
+      </h2>
+        {!isLoading && !error && (
+          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
+          {affectedSites.length} {affectedSites.length === 1 ? 'site affected' : 'sites affected'}
           </span>
         )}
       </div>
-      
-      {isLoading && (
-        <>
-          <LoadingSkeleton />
-        </>
-      )}
-      
+
+      {isLoading && <LoadingSkeleton />}
+
       {error && (
         <DashboardCard>
           <div className="flex items-center text-destructive gap-2">
@@ -43,23 +37,19 @@ const ArubaColumn = ({ data, isLoading, error }: ArubaColumnProps) => {
           </div>
         </DashboardCard>
       )}
-      
-      {!isLoading && !error && (!data || data.length === 0 || data.every(site => site.total_devices_problem === 0)) && (
-        <EmptyState />
-      )}
-      
-      {!isLoading && !error && data && (
-        data
-          .filter(site => site.total_devices_problem > 0)
-          .map((site, index) => (
-            <ArubaCard
-              key={`aruba-site-${index}`}
-              siteName={site.site_name}
-              totalDevices={site.total_devices}
-              totalDevicesWithProblems={site.total_devices_problem}
-              devices={site.devices || []}
-            />
-          ))
+
+      {!isLoading && !error && affectedSites.length === 0 && <EmptyState />}
+
+      {!isLoading && !error && affectedSites.length > 0 && (
+        affectedSites.map((site, index) => (
+          <ArubaCard
+            key={`aruba-site-${index}`}
+            siteName={site.site_name}
+            totalDevices={site.total_devices}
+            totalDevicesWithProblems={site.total_devices_problem}
+            devices={site.devices_problem || []}
+          />
+        ))
       )}
     </div>
   );

@@ -11,7 +11,10 @@ const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
   return (
     <div className="space-y-2 p-3 rounded-lg bg-background/50">
       <div className="flex flex-wrap gap-2 justify-between items-center">
-        <h3 className="font-medium text-sm">{service.name}</h3>
+        <h3 className="font-medium text-sm flex items-center gap-2">
+          {service.icon}
+          {service.name}
+        </h3>
         <div className={`status-badge ${isOperational ? 'status-success' : 'status-error'} min-w-min truncate`}>
           <span className="status-badge-dot"></span>
           <span className="truncate">

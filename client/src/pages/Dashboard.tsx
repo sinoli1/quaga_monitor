@@ -1,5 +1,7 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { Radio } from "lucide-react";
 import { motion } from "framer-motion";
+import { useLocation } from "wouter";
 import TabNavigation from "@/components/Dashboard/TabNavigation";
 import UptimeRobotColumn from "@/components/Columns/UptimeRobotColumn";
 import AteraColumn from "@/components/Columns/AteraColumn";
@@ -11,80 +13,81 @@ import { usePolling } from "@/hooks/usePolling";
 import { StatusSummary as StatusSummaryType, BackupAlerts } from "@/types";
 
 const tabs = [
-  { id: "infrastructure", label: "Estado de Infraestructura" },
-  { id: "services", label: "Servicios y Alertas" },
+  { id: "infrastructure", label: "Infrastructure Status" },
+  { id: "services", label: "Services & Alerts" },
 ];
 
 function Dashboard() {
-  const [activeTab, setActiveTab] = useState("infrastructure");
-  
-  // Use polling for data fetching
+  const [location, setLocation] = useLocation();
+  const tabFromPath = location === "/tab2" ? "services" : "infrastructure";
+  const [activeTab, setActiveTab] = useState(tabFromPath);
+
+  useEffect(() => {
+    // Si la ruta es raíz, redirigir a /tab1
+    if (location === "/") {
+      setLocation("/tab1", { replace: true });
+    }
+  }, [location, setLocation]);
+
+  const handleTabChange = (tabId: string) => {
+    setActiveTab(tabId);
+    setLocation(tabId === "services" ? "/tab2" : "/tab1");
+  };
+
   const uptimeQuery = usePolling("/uptime");
   const ateraQuery = usePolling("/atera");
   const arubaQuery = usePolling("/aruba");
   const externalServicesQuery = usePolling("/rss");
   const backupAlertsQuery = usePolling("/gmail");
-  
-  const lastUpdated = new Date().toLocaleTimeString();
-  
-  // Compute status summary
+
   const computeStatusSummary = (): StatusSummaryType => {
     let critical = 0;
     let warning = 0;
     let operational = 0;
-    
-    // Count services in external services
-    if (externalServicesQuery.data) {
-      const services = externalServicesQuery.data.services || {};
-      Object.keys(services).forEach(service => {
-        if (services[service] === 'Up') operational++;
-        else critical++;
-      });
+
+    // External services
+    const services = externalServicesQuery.data?.services || {};
+    for (const key in services) {
+      services[key] === "Up" ? operational++ : critical++;
     }
-    
-    // Count uptime monitors
-    if (uptimeQuery.data && Array.isArray(uptimeQuery.data)) {
-      uptimeQuery.data.forEach((monitor) => {
-        Object.keys(monitor.monitors_id || {}).forEach(monitorId => {
-          if (monitor.monitors_id[monitorId].status === 'Down') critical++;
-          else if (monitor.monitors_id[monitorId].status === 'Unknown') warning++;
-        });
-      });
+
+    // Uptime Robot
+    const monitors = uptimeQuery.data?.monitors || [];
+    monitors.forEach((monitor) => {
+      const { monitor_down: down, monitor_total: total } = monitor;
+      if (down === total && total > 0) critical += down;
+      else if (down > 0) warning += down;
+    });
+
+    // Atera
+    const alerts = Object.values(ateraQuery.data?.alerts || {});
+    alerts.forEach((alert) => {
+      alert.Title === "Machine status unknown" ? critical++ : warning++;
+    });
+
+    // Aruba
+    const arubaSites = arubaQuery.data?.data || [];
+    arubaSites.forEach((site) => {
+      if (site.total_devices_problem === site.total_devices && site.total_devices > 0) critical++;
+      else if (site.total_devices_problem > 0) warning++;
+    });
+
+    // Backup Alerts
+    const backupData = backupAlertsQuery.data as BackupAlerts;
+    for (const client in backupData || {}) {
+      const state = backupData[client].Estado;
+      if (state.includes("Failed")) critical++;
+      else if (state.includes("Warning")) warning++;
     }
-    
-    // Count atera alerts
-    if (ateraQuery.data && Array.isArray(ateraQuery.data)) {
-      ateraQuery.data.forEach((alert) => {
-        if (alert.AlertMessage.includes("Machine status unknown")) warning++;
-        else critical++;
-      });
-    }
-    
-    // Count aruba devices
-    if (arubaQuery.data && Array.isArray(arubaQuery.data)) {
-      arubaQuery.data.forEach((site) => {
-        critical += site.total_devices_problem;
-        operational += site.total_devices - site.total_devices_problem;
-      });
-    }
-    
-    // Count backup alerts
-    if (backupAlertsQuery.data) {
-      const backupData = backupAlertsQuery.data as BackupAlerts;
-      Object.keys(backupData).forEach(client => {
-        if (backupData[client].Estado.includes("Failed")) critical++;
-        else if (backupData[client].Estado.includes("Warning")) warning++;
-      });
-    }
-    
+
     return { critical, warning, operational };
   };
-  
+
   const statusSummary = computeStatusSummary();
 
   const fadeVariants = {
     hidden: { opacity: 0 },
-    visible: { opacity: 1, transition: { duration: 0.3 } }
+    visible: { opacity: 1, transition: { duration: 0.3 } },
   };
 
   return (
@@ -92,18 +95,17 @@ function Dashboard() {
       <div className="container mx-auto px-4 py-8">
         <header className="mb-6">
           <h1 className="text-2xl md:text-3xl font-bold mb-2 flex items-center">
-            <span className="text-primary mr-2">Monitoreo de Servicios</span>
-            <span className="bg-primary/20 text-primary text-xs px-2 py-1 rounded-md ml-2">EN VIVO</span>
-          </h1>
-          <div className="flex items-center text-sm text-gray-400 mb-4">
-            <span className="flex items-center">
-              <span className="h-2 w-2 bg-secondary rounded-full animate-pulse mr-2"></span>
-              <span>Última actualización: {lastUpdated}</span>
+            <Radio className="w-6 h-6 mr-2 text-orange-300 drop-shadow-md" />
+            <span className="text-transparent bg-gradient-to-r from-blue-300 to-orange-300 bg-clip-text">
+              QUAGA Monitor
             </span>
-          </div>
-          
-          {/* Status Summary at top */}
-          <StatusSummary 
+            <span className="ml-2 text-xs px-2 py-1 rounded-md text-white bg-gradient-to-r from-o-500 to-orange-500 shadow-sm">
+              Live
+            </span>
+          </h1>
+
+          {/* Summary */}
+          <StatusSummary
             critical={statusSummary.critical}
             warning={statusSummary.warning}
             operational={statusSummary.operational}
@@ -112,7 +114,11 @@ function Dashboard() {
           />
         </header>
 
-        <TabNavigation tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+        <TabNavigation
+          tabs={tabs}
+          activeTab={activeTab}
+          onTabChange={handleTabChange}
+        />
 
         <motion.div
           key={activeTab}
@@ -123,34 +129,14 @@ function Dashboard() {
         >
           {activeTab === "infrastructure" ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              <UptimeRobotColumn 
-                data={uptimeQuery.data} 
-                isLoading={uptimeQuery.isLoading} 
-                error={uptimeQuery.error} 
-              />
-              <AteraColumn 
-                data={ateraQuery.data} 
-                isLoading={ateraQuery.isLoading} 
-                error={ateraQuery.error} 
-              />
-              <ArubaColumn 
-                data={arubaQuery.data} 
-                isLoading={arubaQuery.isLoading} 
-                error={arubaQuery.error} 
-              />
+              <UptimeRobotColumn {...uptimeQuery} />
+              <AteraColumn {...ateraQuery} />
+              <ArubaColumn {...arubaQuery} />
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-              <ExternalServicesColumn 
-                data={externalServicesQuery.data} 
-                isLoading={externalServicesQuery.isLoading} 
-                error={externalServicesQuery.error}
-              />
-              <BackupAlertsColumn 
-                data={backupAlertsQuery.data} 
-                isLoading={backupAlertsQuery.isLoading} 
-                error={backupAlertsQuery.error}
-              />
+              <ExternalServicesColumn {...externalServicesQuery} />
+              <BackupAlertsColumn {...backupAlertsQuery} />
             </div>
           )}
         </motion.div>

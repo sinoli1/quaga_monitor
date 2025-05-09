@@ -1,10 +1,59 @@
-import { getUptimeRobotData } from "../services/uptimeRobot";
-import { getAteraData } from "../services/atera";
-import { getArubaData } from "../services/aruba";
-import { getExternalServicesData } from "../services/externalServices";
-import { getGmailBackupAlerts } from "../services/gmail";
+import axios from 'axios';
 
-// Controller functions for monitoring data
+const API_BASE_URL = 'http://10.200.0.212:5000';
+
+// Service functions
+const getArubaData = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/aruba`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Aruba data:", error);
+    throw error;
+  }
+};
+
+const getAteraData = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/atera`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Atera data:", error);
+    throw error;
+  }
+};
+
+const getExternalServicesData = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/rss`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching External Services data:", error);
+    throw error;
+  }
+};
+
+const getGmailBackupAlerts = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/gmail`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Gmail Backup Alerts data:", error);
+    throw error;
+  }
+};
+
+const getUptimeRobotData = async () => {
+  try {
+    const response = await axios.get(`${API_BASE_URL}/uptime`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Uptime Robot data:", error);
+    throw error;
+  }
+};
+
+// Controller functions
 export const getUptimeRobotController = async () => {
   try {
     return await getUptimeRobotData();

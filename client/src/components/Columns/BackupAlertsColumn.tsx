@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { TriangleAlert, HardDriveIcon } from "lucide-react";
+import { TriangleAlert, HardDriveIcon, Database } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import BackupAlertCard from "@/components/Cards/BackupAlertCard";
 import { BackupAlerts } from "@/types";
@@ -26,25 +26,29 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
     });
   };
 
-  // Transform data into an array of alerts with client name
-  const alertsArray = !data ? [] : Object.entries(data).map(([client, alert]) => ({
-    id: client,
-    client,
-    status: alert.Estado,
-    sentDate: alert.FechaEnvio,
-    summary: alert.Cuerpo.substring(0, 100),
-    fullBody: alert.Cuerpo
-  }));
+  // Transform and filter data: only include failed alerts
+  const alertsArray = !data
+    ? []
+    : Object.entries(data)
+        .filter(([, alert]) => alert.Estado === "Failed")
+        .map(([client, alert]) => ({
+          id: client,
+          client,
+          status: alert.Estado,
+          sentDate: alert.FechaEnvio,
+          summary: alert.Cuerpo.substring(0, 100),
+          fullBody: alert.Cuerpo
+        }));
 
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-        <h2 className="text-lg font-semibold flex items-center">
-          <span className="w-3 h-3 bg-red-500 rounded-full mr-2"></span>
-          Backup Alerts
-        </h2>
+      <h2 className="text-xl font-semibold flex items-center">
+        <Database className="w-6 h-6 text-red-500 mr-2" />
+        Backup Alerts
+      </h2>
         {!isLoading && !error && alertsArray && (
-          <span className="text-xs text-gray-400">
+          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
             {alertsArray.length} {alertsArray.length === 1 ? 'alert' : 'alerts'}
           </span>
         )}
