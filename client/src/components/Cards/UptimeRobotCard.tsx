@@ -1,9 +1,10 @@
 import {
   ExternalLinkIcon,
   Cable,
-  ContactRound,
-  ShieldAlert,
-  Goal,
+  MonitorX,
+  LayoutDashboard,
+  ScanEye,
+  ClockAlert
 } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 
@@ -17,10 +18,8 @@ interface UptimeRobotCardProps {
   isCritical: boolean;
 }
 
-// Parsea texto tipo "9 days, 4:08:54" o "4:08:54" y devuelve días como número decimal
 const parseUptimeString = (time: string): number => {
   if (time === "Unknown") return 999;
-
   const daysMatch = time.match(/(\d+)\s+days?/);
   const timeMatch = time.match(/(\d+):(\d+):(\d+)/);
 
@@ -42,11 +41,19 @@ const getBadgeClass = (time: string) => {
   }
 };
 
-const formatLastDown = (lastDownTime: string) => {
-  return lastDownTime === "Unknown" ? "Unknown" : lastDownTime;
+const formatLastDown = (time: string) => {
+  if (time === "Unknown") return "Desconocido";
+
+  const daysMatch = time.match(/(\d+)\s+days?/);
+  const timeMatch = time.match(/(\d+):(\d+):(\d+)/);
+
+  const d = daysMatch ? `${daysMatch[1]}d` : "";
+  const h = timeMatch ? `${parseInt(timeMatch[1])}h` : "";
+  const m = timeMatch ? `${parseInt(timeMatch[2])}m` : "";
+
+  return [d, h, m].filter(Boolean).join(" ");
 };
 
-// Componente individual
 const UptimeRobotCard = ({
   clientName,
   monitorName,
@@ -56,107 +63,76 @@ const UptimeRobotCard = ({
   statusUrl,
   isCritical,
 }: UptimeRobotCardProps) => {
-  const getStatusLabel = () => {
-    return isCritical ? "Disconnet" : "Partial";
-  };
-
-  const getStatusClass = () => {
-    return isCritical ? "status-error" : "status-warning";
-  };
-
+  const getStatusLabel = () => isCritical ? "Desconectado" : "Parcial";
+  const getStatusClass = () => isCritical ? "status-error" : "status-warning";
   const monitorId = statusUrl.split("/").pop();
 
+  const maxLength = 50;
+  const truncatedUrl = url.length > maxLength ? url.slice(0, maxLength) + '...' : url;
+
   return (
-    <DashboardCard>
+    <DashboardCard
+      highlightBorder={isCritical}
+      highlightColor="border-red-500 animate-glow-pulse rounded-lg"
+    >
       <div className="flex justify-between items-start mb-3">
         <h3 className="text-white text-lg font-semibold flex items-center gap-2">
-          <Cable className="w-5 h-5 text-orange-400" />
-          {monitorName}
+          <Cable className={`w-5 h-5 ${isCritical ? "text-red-500" : "text-orange-400"}`} />
+          {clientName}
         </h3>
         <div className={`status-badge ${getStatusClass()}`}>
-          <span className="status-badge-dot" />
+          <span className={`status-badge-dot ${isCritical ? "animate-glow-pulse" : ""}`} />
           {getStatusLabel()}
         </div>
       </div>
 
       <div className="space-y-2 text-sm">
-        <div className="flex items-center gap-2 text-gray-300">
-          <ContactRound className="w-4 h-4 text-blue-200" />
-          <span className="text-sm">Client:</span>
-          <span className="text-white font-medium">{clientName}</span>
+        <div className="flex items-center gap-2 text-gray-400">
+          <MonitorX className="w-4 h-4 text-blue-200" />
+          <span className="text-sm">Servicio:</span>
+          <span className="text-white font-medium truncate">{monitorName}</span>
         </div>
 
-        <div
-          className={`flex items-center gap-2 ${
-            isCritical ? "text-red-400" : "text-gray-300"
-          }`}
-        >
-          <ShieldAlert className="w-4 h-4 text-blue-200" />
-          <span className="text-sm">Monitor:</span>
-          <span className="font-medium">
-            <a
-              href={`https://dashboard.uptimerobot.com/monitors/${monitorId}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="text-primary hover:text-primary-light"
-            >
-              ver en Uptime
-            </a>
-          </span>
+        <div className="flex items-center gap-2 text-gray-400">
+          <LayoutDashboard className="w-4 h-4 text-blue-200" />
+          <span className="text-sm">Más detalle:</span>
+          <a
+            href={`https://dashboard.uptimerobot.com/monitors/${monitorId}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-primary hover:text-primary-light flex items-center gap-1"
+          >
+            ir al dashboard
+            <ExternalLinkIcon className="h-3 w-3" />
+          </a>
         </div>
 
-        <div className="flex items-center gap-2 text-gray-400 truncate">
-          <Goal className="w-4 h-4 text-blue-200" />
-          <span className="text-sm">Watching:</span>
-          <span className="text-white font-medium">{url}</span>
+        <div className="flex items-center gap-2 text-gray-400">
+          <ScanEye className="w-4 h-4 text-blue-200" />
+          <span className="text-sm">Monitoreando:</span>
+          <span className="text-white font-medium truncate max-w-[200px] sm:max-w-[250px]">{truncatedUrl}</span>
         </div>
       </div>
 
-      <div className="flex justify-between text-xs items-center mt-3">
+      <div className="flex justify-between flex-wrap gap-y-2 text-xs items-center mt-3">
         <span className="text-gray-400 inline-flex items-center gap-1">
-          <span className="font-medium text-white">Started:</span>
-          <span
-            className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getBadgeClass(
-              lastDown
-            )}`}
-          >
+          <ClockAlert className="w-4 h-4 text-blue-200" />
+          <span className="font-medium text-gray">Última caída:</span>
+          <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${getBadgeClass(lastDown)}`}>
             {formatLastDown(lastDown)}
           </span>
         </span>
-        <span className="font-medium">
-          <a
-            href={statusUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="text-xs text-primary hover:text-primary-light flex items-center"
-          >
-            View Status Page
-            <ExternalLinkIcon className="h-3 w-3 ml-1" />
-          </a>
-        </span>
+        <a
+          href={statusUrl}
+          target="_blank"
+          rel="noopener noreferrer"
+          className="text-xs text-primary hover:text-primary-light flex items-center gap-1"
+        >
+          Página de estado
+          <ExternalLinkIcon className="h-3 w-3" />
+        </a>
       </div>
     </DashboardCard>
-  );
-};
-
-// Componente lista
-interface UptimeRobotListProps {
-  data: UptimeRobotCardProps[];
-}
-
-export const UptimeRobotList = ({ data }: UptimeRobotListProps) => {
-  const sortedData = [...data].sort((a, b) => {
-    if (a.isCritical && !b.isCritical) return -1;
-    if (!a.isCritical && b.isCritical) return 1;
-    return 0;
-  });
-
-  return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-      {sortedData.map((item, idx) => (
-        <UptimeRobotCard key={idx} {...item} />
-      ))}
-    </div>
   );
 };
 

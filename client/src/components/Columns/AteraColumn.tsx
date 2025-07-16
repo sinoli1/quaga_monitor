@@ -51,13 +51,13 @@ const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
   return (
     <div className="space-y-4">
       <div className="flex items-center justify-between">
-      <h2 className="text-xl font-semibold flex items-center">
-        <GrServerCluster className="w-6 h-6 text-orange-500 mr-2" />
-        Atera
-      </h2>
+        <h2 className="text-xl font-semibold flex items-center">
+          <GrServerCluster className="w-6 h-6 text-orange-500 mr-2" />
+          Atera
+        </h2>
         {!isLoading && !error && (
           <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
-          {sortedAlerts.length} {sortedAlerts.length === 1 ? 'alert' : 'alerts'}
+            {sortedAlerts.length} {sortedAlerts.length === 1 ? 'alerta' : 'alertas'}
           </span>
         )}
       </div>
@@ -73,7 +73,7 @@ const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
         <DashboardCard>
           <div className="flex items-center text-destructive gap-2">
             <TriangleAlert className="h-5 w-5" />
-            <span>Failed to load Atera data</span>
+            <span>Fallo al cargar los datos de Atera.</span>
           </div>
         </DashboardCard>
       )}
@@ -81,17 +81,25 @@ const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
       {!isLoading && !error && sortedAlerts.length === 0 && <EmptyState />}
 
       {!isLoading && !error && sortedAlerts.length > 0 && (
-        sortedAlerts.map((alert, index) => (
-          <AteraCard
-          key={`${alert.DeviceGuid || index}`}
-          title={`${alert.DeviceName} | ${alert.CustomerName}`}
-          description={alert.AlertMessage}
-          startTime={alert.incidents[0]?.created || ''}
-          resolved={alert.incidents[0]?.resolved}
-          deviceGuid={alert.DeviceGuid} // 👈 acá lo pasás
-          topProcesses={extractTopProcesses(alert.AlertMessage)}
-        />
-        ))
+        <>
+          {sortedAlerts.map((alert, index) => (
+            <AteraCard
+              key={`${alert.DeviceGuid || index}`}
+              title={`${alert.DeviceName} | ${alert.CustomerName}`}
+              description={alert.AlertMessage}
+              startTime={alert.incidents[0]?.created || ''}
+              resolved={alert.incidents[0]?.resolved}
+              deviceGuid={alert.DeviceGuid}
+              topProcesses={extractTopProcesses(alert.AlertMessage)}
+            />
+          ))}
+
+          <DashboardCard className="p-2">
+            <div className="text-center text-sm text-gray-500 font-medium">
+              Alertas totales: {sortedAlerts.length}
+            </div>
+          </DashboardCard>
+        </>
       )}
     </div>
   );
@@ -114,13 +122,15 @@ const LoadingSkeleton = () => (
 );
 
 const EmptyState = () => (
-  <DashboardCard>
-    <div className="flex flex-col items-center py-6">
-      <ShieldAlertIcon className="text-gray-500 mb-4 h-12 w-12" />
-      <p className="text-gray-400 mb-1">No alerts detected</p>
-      <p className="text-xs text-gray-500">All systems operational</p>
-    </div>
-  </DashboardCard>
+  <div className="border border-green-500 rounded-2xl overflow-hidden">
+    <DashboardCard>
+      <div className="flex flex-col items-center py-6">
+        <ShieldAlertIcon className="text-green-500 mb-4 h-12 w-12" />
+        <p className="text-green-600 mb-1">No se detectaron alertas</p>
+        <p className="text-xs text-green-500">Todos los servidores estan operativos</p>
+      </div>
+    </DashboardCard>
+  </div>
 );
 
 export default AteraColumn;

@@ -16,9 +16,9 @@ const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
           {service.name}
         </h3>
         <div className={`status-badge ${isOperational ? 'status-success' : 'status-error'} min-w-min truncate`}>
-          <span className="status-badge-dot"></span>
+          <span className="status-badge-dot animate-glow-pulse"></span>
           <span className="truncate">
-            {isOperational ? "Operacional" : "Fuera de servicio"}
+            {isOperational ? "Operativo" : "Incidente"}
           </span>
         </div>
       </div>
@@ -28,7 +28,7 @@ const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
         rel="noopener noreferrer"
         className="text-xs text-primary flex items-center hover:underline"
       >
-        Página de estado
+        Estado del servicio
         <ExternalLinkIcon className="ml-1 h-3 w-3" />
       </a>
     </div>
