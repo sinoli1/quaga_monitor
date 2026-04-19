@@ -1,4 +1,4 @@
-import { TriangleAlert, ServerIcon, Cog } from "lucide-react";
+import { TriangleAlert, ServerIcon, Cog, Globe, Bot, Network, ShieldCheck } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import { FontAwesomeIcon } from "@fortawesome/react-fontawesome";
 import { faMeta } from "@fortawesome/free-brands-svg-icons";
@@ -11,6 +11,8 @@ import { Mercadopago } from "@/components/Icons/Mercadopago";
 import { Noip } from "@/components/Icons/Noip";
 import { OpenaiChatgpt } from "@/components/Icons/ChatGPT";
 import { MiAfip } from "@/components/Icons/ARCA";
+import { Atera } from "@/components/Icons/Atera";
+import { UptimeRobot as UptimeRobotIcon } from "@/components/Icons/UptimeRobot";
 import { format } from "date-fns";
 import {
   SiGoogle,
@@ -48,15 +50,18 @@ const serviceUrls: Record<string, string> = {
   "AFIP": "https://www.afip.gob.ar/",
   "MercadoPago": "https://status.mercadopago.com/",
   "ChatGPT": "https://status.openai.com/",
-  "Cloud MikroTik": "https://www.nslookup.io/domains/cloud2.mikrotik.com/dns-records/"
-
+  "Cloud MikroTik": "https://www.nslookup.io/domains/cloud2.mikrotik.com/dns-records/",
+  "Claude": "https://status.anthropic.com/",
+  "Atera": "https://status.atera.com/",
+  "DNSStatus": "https://dnsstatus.com/",
+  "Sophos": "https://status.sophos.com/"
 };
 
 const serviceIcons: Record<string, JSX.Element> = {
   "No-IP": <Noip className="text-lg text-green-600 mr-2 w-5 h-5" />,
   "AnyDesk": <SiAnydesk className="text-lg text-red-500 mr-2 w-5 h-5" />,
   "Freshdesk": <SiCodefresh className="text-lg text-blue-300 mr-2 w-5 h-5" />,
-  "UptimeRobot": <FaCircleDot className="text-lg text-green-300 mr-2 w-5 h-5" />,
+  "UptimeRobot": <UptimeRobotIcon className="text-lg text-[#3BD771] mr-2 w-5 h-5" />,
   "ClickUp": <SiClickup className="text-lg text-blue-300 mr-2 w-5 h-5" />,
   "Google Workspace": <SiGoogle className="text-lg text-orange-300 mr-2 w-5 h-5" />,
   "NextDNS": <SiNextdns className="text-lg text-blue-300 mr-2 w-5 h-5" />,
@@ -68,7 +73,11 @@ const serviceIcons: Record<string, JSX.Element> = {
   "ChatGPT": <OpenaiChatgpt className="text-white mr-2 w-5 h-5" />,
   "AFIP": <MiAfip className="text-white mr-2 w-5 h-5" />,
   "Dropbox": <SiDropbox className="text-blue-500 mr-2 w-5 h-5" />,
-  "Cloud MikroTik": <Mikrotik className="text-white-500 mr-2 w-5 h-5" />
+  "Cloud MikroTik": <Mikrotik className="text-white-500 mr-2 w-5 h-5" />,
+  "Claude": <Bot className="text-orange-400 mr-2 w-5 h-5" />,
+  "Atera": <Atera className="text-pink-500 mr-2 w-5 h-5" />,
+  "DNSStatus": <Network className="text-blue-400 mr-2 w-5 h-5" />,
+  "Sophos": <ShieldCheck className="text-blue-600 mr-2 w-5 h-5" />
 };
 
 const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColumnProps) => {
@@ -85,15 +94,17 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
     : 'Unknown';
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <h2 className="text-xl font-semibold flex items-center">
-          <Cog className="w-6 h-6 text-green-500 mr-2" />
-          Servicios externos
-        </h2>
-        {!isLoading && !error && data && (
-          <span className="text-sm text-blue-400 bg--500/20 px-2 py-0.5 rounded-full">Actualizado {lastUpdated}</span>
-        )}
+    <div className="col">
+      <div className="col-head" style={{ minHeight: '44px' }}>
+        <div className="col-title flex items-center gap-2" style={{ fontSize: '18px', fontWeight: 700 }}>
+          <Globe className="w-5 h-5 text-[#86b4ff]" aria-hidden="true" />
+          SERVICIOS EXTERNOS
+        </div>
+        <div className="col-counts">
+          {!isLoading && !error && data && (
+            <span className="count-chip warning">Actualizado {lastUpdated}</span>
+          )}
+        </div>
       </div>
 
       {isLoading && (
@@ -120,13 +131,11 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
       )}
 
       {!isLoading && !error && serviceStatuses.length > 0 && (
-        <DashboardCard>
-          <div className="grid grid-cols-2 gap-4">
-            {serviceStatuses.map((service, index) => (
-              <ExternalServiceCard key={`${service.name}-${index}`} service={service} />
-            ))}
-          </div>
-        </DashboardCard>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+          {serviceStatuses.map((service, index) => (
+            <ExternalServiceCard key={`${service.name}-${index}`} service={service} />
+          ))}
+        </div>
       )}
     </div>
   );

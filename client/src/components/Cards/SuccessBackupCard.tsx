@@ -1,7 +1,3 @@
-// components/Cards/SuccessBackupCard.tsx (Crea este nuevo archivo)
-
-import DashboardCard from "@/components/Dashboard/Card";
-import { CheckCircle2, Clock } from "lucide-react";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
 
@@ -14,7 +10,6 @@ interface SuccessBackupCardProps {
 const formatSuccessDate = (dateString: string) => {
     try {
         const date = new Date(dateString);
-        // Formato dd/MM HH:mm (más compacto)
         return format(date, "dd/MM HH:mm", { locale: es });
     } catch {
         return dateString;
@@ -23,25 +18,22 @@ const formatSuccessDate = (dateString: string) => {
 
 const SuccessBackupCard = ({ clientName, status, sentDate }: SuccessBackupCardProps) => {
   return (
-    <DashboardCard className="p-3 flex items-center justify-between border-l-4 border-green-500 min-h-[50px]">
-      
-      {/* Columna 1: Nombre y Éxito */}
-      <div className="flex flex-col gap-0.5 min-w-0 pr-2">
-        <span className="text-sm font-medium text-white truncate">
-          {clientName}
-        </span>
-        <div className="flex items-center gap-1 text-xs text-green-400">
-            <CheckCircle2 className="w-3 h-3" />
-            <span className="font-semibold">{status}</span>
+    <div className="card" style={{ borderColor: 'rgba(95, 211, 159, 0.3)' }}>
+      <div className="card-head">
+        <div className="card-identity">
+          <div className="avatar" style={{ background: 'linear-gradient(135deg, #5fd39f 0%, #3e9a72 100%)', boxShadow: 'none', color: '#fff' }}>
+            {clientName.substring(0, 2).toUpperCase()}
+          </div>
+          <div className="card-name">
+            <div className="card-title">{clientName.toUpperCase()}</div>
+            <div className="card-subtitle" style={{ color: '#5fd39f' }}>{status}</div>
+          </div>
+        </div>
+        <div className="card-badge" style={{ background: 'transparent', border: '1px solid rgba(95, 211, 159, 0.2)', color: '#5fd39f' }}>
+          {formatSuccessDate(sentDate)}
         </div>
       </div>
-
-      {/* Columna 2: Hora (Badge) */}
-      <div className="flex-shrink-0 flex items-center gap-1.5 px-2 py-0.5 rounded-full text-xs font-semibold text-green-700 bg-green-300/20 whitespace-nowrap">
-          <Clock className="w-3 h-3" />
-          {formatSuccessDate(sentDate)}
-      </div>
-    </DashboardCard>
+    </div>
   );
 };
 

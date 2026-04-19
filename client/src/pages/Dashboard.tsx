@@ -658,7 +658,7 @@ function Dashboard() {
           </Column>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_2fr] gap-7 mt-6">
           <ExternalServicesColumn {...externalServicesQuery} />
           <BackupAlertsColumn {...backupAlertsQuery} />
         </div>
