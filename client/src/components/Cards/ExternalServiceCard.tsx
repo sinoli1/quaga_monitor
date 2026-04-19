@@ -30,7 +30,7 @@ const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
           border: `1px solid ${isOperational ? 'var(--ok-border)' : 'var(--critical-border)'}`,
           flexShrink: 0
       }}>
-        {isOperational ? 'UP' : 'DOWN'}
+        {isOperational ? 'Activo' : 'Incidente'}
       </div>
     </a>
   );

@@ -22,7 +22,8 @@ import {
   SiAnydesk,
   SiGooglecloud,
   SiCloudflare,
-  SiDropbox
+  SiDropbox,
+  SiHuawei
 } from "react-icons/si";
 import { TbBrandOffice } from "react-icons/tb";
 import { FaCircleDot } from "react-icons/fa6";
@@ -54,7 +55,8 @@ const serviceUrls: Record<string, string> = {
   "Claude": "https://status.anthropic.com/",
   "Atera": "https://status.atera.com/",
   "DNSStatus": "https://dnsstatus.com/",
-  "Sophos": "https://status.sophos.com/"
+  "Sophos": "https://status.sophos.com/",
+  "Huawei Cloud": "https://status.service.huaweicloud.com/intl"
 };
 
 const serviceIcons: Record<string, JSX.Element> = {
@@ -77,7 +79,8 @@ const serviceIcons: Record<string, JSX.Element> = {
   "Claude": <Bot className="text-orange-400 mr-2 w-5 h-5" />,
   "Atera": <Atera className="text-pink-500 mr-2 w-5 h-5" />,
   "DNSStatus": <Network className="text-blue-400 mr-2 w-5 h-5" />,
-  "Sophos": <ShieldCheck className="text-blue-600 mr-2 w-5 h-5" />
+  "Sophos": <ShieldCheck className="text-blue-600 mr-2 w-5 h-5" />,
+  "Huawei Cloud": <SiHuawei className="text-orange-400 mr-2 w-5 h-5" />,
 };
 
 const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColumnProps) => {
@@ -131,7 +134,7 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
       )}
 
       {!isLoading && !error && serviceStatuses.length > 0 && (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '10px' }}>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
           {serviceStatuses.map((service, index) => (
             <ExternalServiceCard key={`${service.name}-${index}`} service={service} />
           ))}

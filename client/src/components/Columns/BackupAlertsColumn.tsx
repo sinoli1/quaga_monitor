@@ -74,7 +74,7 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
 
       {!isLoading && !error && failedArray.length > 0 && (
         <>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, minmax(0, 1fr))', gap: '12px', alignItems: 'start' }}>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
             {failedArray.map((alert, index) => {
               return (
                 <BackupAlertCard
@@ -95,13 +95,12 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
       )}
 
       {!isLoading && !error && (
-        <div className="text-center mt-6">
+        <div className="text-left mt-6">
           <a
             href="https://backup.quaga.ar"
             target="_blank"
             rel="noopener noreferrer"
-            className="show-more"
-            style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}
+            className="backup-main-btn"
           >
             Ver historial completo en backup.quaga.ar
             <ExternalLink size={14} />
