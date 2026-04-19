@@ -1,4 +1,4 @@
-import { TriangleAlert, ShieldAlertIcon } from "lucide-react";
+import { CloudOff, ShieldAlertIcon } from "lucide-react";
 import { GrServerCluster } from "react-icons/gr";
 
 import DashboardCard from "@/components/Dashboard/Card";
@@ -7,45 +7,34 @@ import { AteraAlert } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface AteraColumnProps {
-  data: { [key: string]: AteraAlert } | undefined;
+  data: { alerts: { [key: string]: AteraAlert } } | undefined;
   isLoading: boolean;
   error: Error | null;
 }
 
-// 🧠 Función para extraer el top 3 de procesos del mensaje
-const extractTopProcesses = (message: string): { name: string; memory: string }[] | null => {
-  const match = message.match(/Top 3 procesos.*?:\s(.+)$/);
-  if (!match) return null;
-
-  const processString = match[1]
-    .replace(/\sy\s/g, ", ") // Reemplaza " y " por ", " para unificar separadores
-    .trim();
-
-  const entries = processString.split(",").map(proc => {
-    const [name, mem] = proc.split(":").map(p => p.trim());
-    return { name, memory: mem };
-  });
-
-  return entries.length > 0 ? entries : null;
+const isCriticalAlert = (title: string): boolean => {
+  return title.toLowerCase().includes("machine status unknown");
 };
 
 const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
   const sortedAlerts = data
     ? Object.values(data.alerts).sort((a, b) => {
-        if (
-          a.AlertMessage.includes("Estado de la máquina Desconocido") &&
-          !b.AlertMessage.includes("Estado de la máquina Desconocido")
-        ) {
-          return -1;
-        }
-        if (
-          !a.AlertMessage.includes("Estado de la máquina Desconocido") &&
-          b.AlertMessage.includes("Estado de la máquina Desconocido")
-        ) {
-          return 1;
-        }
-        return 0;
-      })
+      // Primero: críticas por Title
+      const aIsCritical = isCriticalAlert(a.Title);
+      const bIsCritical = isCriticalAlert(b.Title);
+
+      if (aIsCritical && !bIsCritical) return -1;
+      if (!aIsCritical && bIsCritical) return 1;
+
+      // Dentro del mismo nivel: por nombre del cliente (CustomerName)
+      const customerCompare = a.CustomerName.localeCompare(b.CustomerName);
+      if (customerCompare !== 0) return customerCompare;
+
+      // Si es del mismo cliente: por tiempo (más recientes primero)
+      const aTime = new Date(a.incidents[0]?.created || 0).getTime();
+      const bTime = new Date(b.incidents[0]?.created || 0).getTime();
+      return bTime - aTime;
+    })
     : [];
 
   return (
@@ -56,9 +45,16 @@ const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
           Atera
         </h2>
         {!isLoading && !error && (
-          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
-            {sortedAlerts.length} {sortedAlerts.length === 1 ? 'alerta' : 'alertas'}
-          </span>
+          <div className="flex gap-2">
+            {sortedAlerts.filter(a => isCriticalAlert(a.Title)).length > 0 && (
+              <span className="text-sm text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+                {sortedAlerts.filter(a => isCriticalAlert(a.Title)).length} apagado
+              </span>
+            )}
+            <span className="text-sm text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
+              {sortedAlerts.filter(a => !isCriticalAlert(a.Title)).length} alertas
+            </span>
+          </div>
         )}
       </div>
 
@@ -70,10 +66,15 @@ const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
       )}
 
       {error && (
-        <DashboardCard>
-          <div className="flex items-center text-destructive gap-2">
-            <TriangleAlert className="h-5 w-5" />
-            <span>Fallo al cargar los datos de Atera.</span>
+        <DashboardCard variant="critical">
+          <div className="flex flex-col items-center text-center py-6">
+            <CloudOff className="text-red-500 mb-3 h-14 w-14 animate-pulse" />
+            <h3 className="text-lg font-semibold text-red-600">
+              Error al conectar con Atera
+            </h3>
+            <p className="text-sm text-red-400 mt-1">
+              No se pudo cargar los datos de la API.
+            </p>
           </div>
         </DashboardCard>
       )}
@@ -90,7 +91,12 @@ const AteraColumn = ({ data, isLoading, error }: AteraColumnProps) => {
               startTime={alert.incidents[0]?.created || ''}
               resolved={alert.incidents[0]?.resolved}
               deviceGuid={alert.DeviceGuid}
-              topProcesses={extractTopProcesses(alert.AlertMessage)}
+              ipAddress={alert.IpAddress}
+              os={alert.OS}
+              alertTitle={alert.Title}
+              hardwareDisks={alert.HardwareDisks}
+              logo={alert.Logo}
+              customerName={alert.CustomerName}
             />
           ))}
 
@@ -127,7 +133,7 @@ const EmptyState = () => (
       <div className="flex flex-col items-center py-6">
         <ShieldAlertIcon className="text-green-500 mb-4 h-12 w-12" />
         <p className="text-green-600 mb-1">No se detectaron alertas</p>
-        <p className="text-xs text-green-500">Todos los servidores estan operativos</p>
+        <p className="text-xs text-green-500">Todos los servidores están operativos</p>
       </div>
     </DashboardCard>
   </div>

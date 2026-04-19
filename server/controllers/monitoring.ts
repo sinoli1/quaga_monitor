@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://10.200.0.212:5000';
+const API_BASE_URL = 'http://10.200.0.161:5000';
 
 // Service functions
 const getArubaData = async () => {

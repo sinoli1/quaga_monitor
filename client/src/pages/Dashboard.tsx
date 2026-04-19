@@ -1,6 +1,7 @@
-import { useState, useEffect } from "react";
-import { AlertCircle, AlertTriangle, TimerReset } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { AlertCircle, AlertTriangle, RefreshCcw } from "lucide-react";
 import logo from "@/assets/images/logo.png";
+import alertSound from "@/assets/sound/sound.mp3";
 import { motion } from "framer-motion";
 import { useLocation } from "wouter";
 import TabNavigation from "@/components/Dashboard/TabNavigation";
@@ -45,93 +46,100 @@ function Dashboard() {
     visible: { opacity: 1, transition: { duration: 0.3 } },
   };
 
-  const computeStatusSummary = (): StatusSummaryType => {
-  let critical = 0;
-  let warning = 0;
-  let operational = 0;
+  /* 
+    Calculamos los estados críticos por servicio para disparar la alerta sonora
+    independientemente de cada uno.
+  */
+  const computeCriticalCounts = () => {
+    let uptimeCritical = 0;
+    let ateraCritical = 0;
+    let arubaCritical = 0;
 
-  const services = externalServicesQuery.data?.services || {};
-  for (const key in services) {
-    services[key] === "Up" ? operational++ : critical++;
-  }
+    // UptimeRobot Monitors
+    const monitors = uptimeQuery.data?.monitors || [];
+    monitors.forEach((monitor) => {
+      const { monitor_down: down, monitor_total: total } = monitor;
+      if (down === total && total > 0) {
+        uptimeCritical++;
+      }
+    });
 
-  const monitors = uptimeQuery.data?.monitors || [];
-  monitors.forEach((monitor) => {
-    const { monitor_down: down, monitor_total: total } = monitor;
-    if (down === total && total > 0) critical += down;
-    else if (down > 0) warning += down;
-  });
+    // Atera Alerts
+    const alerts = Object.values(ateraQuery.data?.alerts || {});
+    alerts.forEach((alert) => {
+      if (alert.Title === "Machine status unknown") {
+        ateraCritical++;
+      }
+    });
 
-  const alerts = Object.values(ateraQuery.data?.alerts || {});
-  alerts.forEach((alert) => {
-    alert.Title === "Machine status unknown" ? critical++ : warning++;
-  });
+    // Aruba Sites
+    const arubaSites = arubaQuery.data?.data || [];
+    arubaSites.forEach((site) => {
+      if (site.total_devices_problem === site.total_devices && site.total_devices > 0) {
+        arubaCritical++;
+      }
+    });
 
-  const arubaSites = arubaQuery.data?.data || [];
-  arubaSites.forEach((site) => {
-    if (site.total_devices_problem === site.total_devices && site.total_devices > 0) critical++;
-    else if (site.total_devices_problem > 0) warning++;
-  });
+    return { uptime: uptimeCritical, atera: ateraCritical, aruba: arubaCritical };
+  };
 
-  const backupData = backupAlertsQuery.data as BackupAlerts;
-  for (const client in backupData || {}) {
-    const state = backupData[client].Estado;
-    if (state.includes("Failed")) critical++;
-    else if (state.includes("Warning")) warning++;
-  }
+  const criticalCounts = computeCriticalCounts();
+  const prevCriticalCountsRef = useRef({ uptime: 0, atera: 0, aruba: 0 });
 
-  return { critical, warning, operational };
-};
+  useEffect(() => {
+    const { uptime, atera, aruba } = criticalCounts;
+    const prev = prevCriticalCountsRef.current;
 
-const statusSummary = computeStatusSummary();
+    // Reproducir sonido si incrementa la cantidad de críticos en cualquiera de los servicios
+    if (
+      uptime > prev.uptime ||
+      atera > prev.atera ||
+      aruba > prev.aruba
+    ) {
+      const audio = new Audio(alertSound);
+      audio.play().catch((error) => console.log("Audio play failed", error));
+    }
+    prevCriticalCountsRef.current = criticalCounts;
+  }, [criticalCounts.uptime, criticalCounts.atera, criticalCounts.aruba]);
 
   return (
     <div className="min-h-screen w-full">
       <div className="container mx-auto px-4 py-8">
         <header className="mb-6">
-  <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
-    {/* Logo */}
-    <div className="flex justify-center md:justify-start w-full md:w-auto">
-      <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
-        <img
-          src={logo}
-          alt="Logo de la empresa"
-          className="h-12 md:h-20"
-        />
-      </h1>
-    </div>
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* Logo */}
+            <div className="flex justify-center md:justify-start w-full md:w-auto">
+              <h1 className="text-2xl md:text-3xl font-bold flex items-center gap-2">
+                <img
+                  src={logo}
+                  alt="Quaga - Tecnologia para Pymes"
+                  className="h-12 md:h-20"
+                />
+              </h1>
+            </div>
 
-    {/* Status Summary */}
-    <div className="hidden md:flex flex-col md:flex-row md:items-center gap-3 text-sm text-gray-300 bg-background/30 backdrop-blur-sm px-4 py-3 rounded-2xl shadow-sm w-full md:w-auto text-center">
-      <div className="flex items-center justify-center gap-2">
-        <AlertCircle className="w-4 h-4 text-red-500" />
-        <span className="uppercase text-xs text-white/70 tracking-wide">Crítico:</span>
-        <span className="text-white font-semibold">{statusSummary.critical}</span>
-      </div>
+            {/* Status Summary */}
+            <div className="hidden md:flex gap-3 w-full md:w-auto">
 
-      <div className="hidden md:flex items-center justify-center gap-2">
-        <AlertTriangle className="w-4 h-4 text-yellow-500" />
-        <span className="uppercase text-xs text-white/70 tracking-wide">Advertencia:</span>
-        <span className="text-white font-semibold">{statusSummary.warning}</span>
-      </div>
+              {/* Countdown */}
+              <div className="flex items-center gap-2 border border-blue/30 text-primary px-4 py-2 rounded-xl shadow-sm hover:bg-primary/20 transition">
+                <RefreshCcw className="w-4 h-4" />
+                <span className="uppercase text-xs tracking-wide">Proxima actualizacion en: </span>
+                <motion.span
+                  key={uptimeQuery.secondsUntilRefetch}
+                  initial={{ opacity: 0 }}
+                  animate={{ opacity: 1 }}
+                  transition={{ duration: 0.3 }}
+                  className="font-bold text-white"
+                >
+                  {uptimeQuery.secondsUntilRefetch}s
+                </motion.span>
+              </div>
+            </div>
 
-      {/* Countdown solo en desktop */}
-      <div className="hidden md:flex items-center gap-2 text-white/60">
-        <TimerReset className="w-4 h-4 text-primary" />
-        <span className="uppercase tracking-wider text-xs">Próxima actualización</span>
-        <motion.span
-          key={uptimeQuery.secondsUntilRefetch}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.3 }}
-          className="text-white font-bold"
-        >
-          {uptimeQuery.secondsUntilRefetch}s
-        </motion.span>
-      </div>
-    </div>
-  </div>
-</header>
+
+          </div>
+        </header>
 
         <TabNavigation
           tabs={tabs}
@@ -160,9 +168,9 @@ const statusSummary = computeStatusSummary();
           )}
         </motion.div>
       </div>
-      
+
     </div>
-    
+
   );
 }
 

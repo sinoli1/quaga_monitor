@@ -9,18 +9,20 @@ import { ExternalServices, ServiceStatus } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Mercadopago } from "@/components/Icons/Mercadopago";
 import { Noip } from "@/components/Icons/Noip";
+import { OpenaiChatgpt } from "@/components/Icons/ChatGPT";
+import { MiAfip } from "@/components/Icons/ARCA";
 import { format } from "date-fns";
 import {
   SiGoogle,
-  SiSlack,
+  SiClickup,
   SiNextdns,
   SiCodefresh,
   SiAnydesk,
   SiGooglecloud,
-  SiCloudflare 
+  SiCloudflare,
+  SiDropbox
 } from "react-icons/si";
 import { TbBrandOffice } from "react-icons/tb";
-import { RiProhibited2Line } from "react-icons/ri";
 import { FaCircleDot } from "react-icons/fa6";
 
 
@@ -35,47 +37,50 @@ const serviceUrls: Record<string, string> = {
   "AnyDesk": "https://status.anydesk.com/",
   "Freshdesk": "https://updates.freshdesk.com/",
   "UptimeRobot": "https://status.uptimerobot.com/",
-  "Slack": "https://slack-status.com/",
+  "ClickUp": "https://status.clickup.com/",
   "Google Workspace": "https://www.google.com/appsstatus/dashboard/",
   "NextDNS": "https://ping.nextdns.io/",
   "Microsoft 365": "https://portal.office.com/servicestatus/",
   "Cloudflare": "https://www.cloudflarestatus.com/",
   "Google Cloud": "https://status.cloud.google.com/",
   "Meta": "https://metastatus.com/",
+  "Dropbox": "https://status.dropbox.com/",
+  "AFIP": "https://www.afip.gob.ar/",
   "MercadoPago": "https://status.mercadopago.com/",
-  "AFIP": "https://www.afip.gob.ar",
+  "ChatGPT": "https://status.openai.com/",
   "Cloud MikroTik": "https://www.nslookup.io/domains/cloud2.mikrotik.com/dns-records/"
 
 };
 
 const serviceIcons: Record<string, JSX.Element> = {
-  "No-IP": <Noip className="text-lg text-green-600 mr-2" />,
-  "AnyDesk": <SiAnydesk className="text-lg text-red-300 mr-2" />,
-  "Freshdesk": <SiCodefresh className="text-lg text-blue-300 mr-2" />,
-  "UptimeRobot": <FaCircleDot className="text-lg text-green-300 mr-2" />,
-  "Slack": <SiSlack className="text-lg text-yellow-300 mr-2" />,
-  "Google Workspace": <SiGoogle className="text-lg text-orange-300 mr-2" />,
-  "NextDNS": <SiNextdns className="text-lg text-blue-300 mr-2" />,
-  "Google Cloud": <SiGooglecloud className="text-lg text-orange-300 mr-2" />,
-  "Microsoft 365": <TbBrandOffice className="text-lg text-blue-300 mr-2" />,
-  "Cloudflare": <SiCloudflare className="text-lg text-red-300 mr-2"/>,
-  "Meta": <FontAwesomeIcon icon={faMeta} className="text-blue-500 mr-2" />,
+  "No-IP": <Noip className="text-lg text-green-600 mr-2 w-5 h-5" />,
+  "AnyDesk": <SiAnydesk className="text-lg text-red-500 mr-2 w-5 h-5" />,
+  "Freshdesk": <SiCodefresh className="text-lg text-blue-300 mr-2 w-5 h-5" />,
+  "UptimeRobot": <FaCircleDot className="text-lg text-green-300 mr-2 w-5 h-5" />,
+  "ClickUp": <SiClickup className="text-lg text-blue-300 mr-2 w-5 h-5" />,
+  "Google Workspace": <SiGoogle className="text-lg text-orange-300 mr-2 w-5 h-5" />,
+  "NextDNS": <SiNextdns className="text-lg text-blue-300 mr-2 w-5 h-5" />,
+  "Google Cloud": <SiGooglecloud className="text-lg text-orange-300 mr-2 w-5 h-5" />,
+  "Microsoft 365": <TbBrandOffice className="text-lg text-blue-300 mr-2 w-5 h-5" />,
+  "Cloudflare": <SiCloudflare className="text-lg text-red-300 mr-2 w-5 h-5" />,
+  "Meta": <FontAwesomeIcon icon={faMeta} className="text-blue-500 mr-2 w-5 h-5" />,
   "MercadoPago": <Mercadopago className="text-blue-300 mr-2 w-5 h-5" />,
-  "AFIP": <FontAwesomeIcon icon={faA} className="text-blue-500 mr-2"/>,
-  "Cloud MikroTik": <Mikrotik className="text-blue-500 mr-2 w-5 h-5" />
-
+  "ChatGPT": <OpenaiChatgpt className="text-white mr-2 w-5 h-5" />,
+  "AFIP": <MiAfip className="text-white mr-2 w-5 h-5" />,
+  "Dropbox": <SiDropbox className="text-blue-500 mr-2 w-5 h-5" />,
+  "Cloud MikroTik": <Mikrotik className="text-white-500 mr-2 w-5 h-5" />
 };
 
 const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColumnProps) => {
   const serviceStatuses: ServiceStatus[] = !data ? [] : Object.entries(data.services).map(([name, status]) => ({
-  name,
-  status,
-  statusText: status === "Up" ? "Operacional" : status === "Degraded" ? "Degradado" : "Fuera de servicio",
-  statusUrl: serviceUrls[name] || "#",
-  icon: serviceIcons[name]
+    name,
+    status,
+    statusText: status === "Up" ? "Operacional" : status === "Degraded" ? "Degradado" : "Fuera de servicio",
+    statusUrl: serviceUrls[name] || "#",
+    icon: serviceIcons[name]
   }));
 
-  const lastUpdated = data?.timestamp 
+  const lastUpdated = data?.timestamp
     ? format(new Date(data.timestamp), 'MMM d, h:mm a')
     : 'Unknown';
 

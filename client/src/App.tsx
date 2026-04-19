@@ -33,8 +33,8 @@ function App() {
           <Router />
           <Toaster />
         </div>
-<footer
-  className="hidden md:flex
+        <footer
+          className="hidden md:flex
     fixed bottom-0 left-1/2
     transform -translate-x-1/2
     backdrop-blur-sm
@@ -45,18 +45,18 @@ function App() {
     z-50
     shadow
   "
->
-  Propiedad intelectual de&nbsp;
-  <a
-    href="https://quaga.com"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-500 hover:underline"
-  >
-    QUAGA SRL
-  </a>
-  &nbsp;· {new Date().getFullYear()}
-</footer>
+        >
+          Propiedad intelectual de&nbsp;
+          <a
+            href="https://quaga.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+          >
+            QUAGA SRL
+          </a>
+          &nbsp;· {new Date().getFullYear()}
+        </footer>
 
       </div>
     </QueryClientProvider>

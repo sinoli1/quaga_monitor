@@ -1,13 +1,14 @@
 import {
   ChevronDownIcon,
   ChevronUpIcon,
-  MailX,
+  DatabaseZap, 
+  Clock,
+  AlertTriangle,
 } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import { motion, AnimatePresence } from "framer-motion";
 import { format } from "date-fns";
 import { es } from "date-fns/locale";
-import { useState } from "react";
 
 interface BackupAlertCardProps {
   clientName: string;
@@ -17,7 +18,6 @@ interface BackupAlertCardProps {
   fullBody: string;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  successList?: { clientName: string; status: string; sentDate: string }[];
 }
 
 const BackupAlertCard = ({
@@ -28,17 +28,12 @@ const BackupAlertCard = ({
   fullBody,
   isExpanded,
   onToggleExpand,
-  successList = [],
 }: BackupAlertCardProps) => {
-  const [showSuccessList, setShowSuccessList] = useState(false);
 
-  const getStatusColor = (status: string) => {
-    const lower = status.toLowerCase();
-    if (lower.includes("failed")) return "text-red-500 border-red-500";
-    if (lower.includes("warning")) return "text-yellow-500 border-yellow-500";
-    return "text-gray-500 border-gray-500";
-  };
-
+  const isFailed = status.toLowerCase().includes("failed");
+  const alertColor = isFailed ? "text-red-500" : "text-gray-400";
+  const dateColor = isFailed ? "text-red-400" : "text-gray-400";
+  
   const formatSentDate = (dateString: string) => {
     try {
       const cleanDate = dateString.replace(/\s*\(.*?\)$/, "");
@@ -49,92 +44,88 @@ const BackupAlertCard = ({
     }
   };
 
+  const getSummaryDisplay = (text: string) => {
+    if (isExpanded) {
+        return <p className="whitespace-pre-wrap text-gray-300 text-sm leading-snug">{fullBody}</p>;
+    }
+    
+    // Obtener la primera línea o truncar
+    const maxSummaryLength = 100;
+    let shortText = text.split('\n')[0].trim();
+    
+    if (fullBody.length > maxSummaryLength) {
+        shortText = shortText.substring(0, maxSummaryLength).trim() + "...";
+    }
+
+    return <p className="text-gray-400 text-sm leading-snug">{shortText}</p>;
+  };
+
+  // Se asume una altura aproximada para el resumen de 3 líneas de texto (text-sm leading-snug)
+  // Calculamos la altura necesaria para 3 líneas + el padding/margin del subtítulo.
+  const baseContentHeightClass = isExpanded ? '' : 'min-h-[4rem]'; 
+    // 4rem (approx 64px) cubre el espacio de 3 líneas y asegura simetría.
+
+
   return (
-    <DashboardCard>
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2 text-indigo-300">
-          <MailX className="w-5 h-5" />
-          <h3 className="text-lg font-semibold text-white">
+    // min-h es ahora más consistente.
+    <DashboardCard className="min-h-[160px] flex flex-col justify-between p-4"> 
+      
+      {/* 1. HEADER (Título y Horario) */}
+      <header className={`grid grid-cols-3 gap-2 pb-2 mb-2 border-b border-gray-700/50`}>
+        
+        {/* COLUMNA 1: TÍTULO */}
+        <div className="flex items-center gap-2 col-span-2">
+          <DatabaseZap className={`w-5 h-5 shrink-0 ${alertColor}`} /> 
+          <h3 className="text-base font-bold text-white leading-tight truncate">
             {clientName.toUpperCase()}
           </h3>
         </div>
-        <span className={`border-l-4 pl-2 text-sm font-medium ${getStatusColor(status)}`}>
-          {formatSentDate(sentDate)}
-        </span>
-      </div>
+        
+        {/* COLUMNA 2: HORARIO (Énfasis: Badge con Clock) */}
+        <div className={`flex justify-end items-center gap-1 px-2 py-0.5 rounded-md text-xs font-semibold ${dateColor} bg-red-400/10 leading-none`}>
+            <Clock className="w-3 h-3" />
+            {formatSentDate(sentDate)}
+        </div>
+      </header>
 
-      <div className="text-sm text-gray-400">
-        {!isExpanded ? (
-          <p>
-            {summary.length > 120 ? summary.substring(0, 120) + "..." : summary}
-          </p>
-        ) : (
-          <AnimatePresence>
+      {/* 2. BODY (Subtítulo y Descripción) */}
+      <div className={`text-sm flex-grow pb-2 mb-2 border-b border-gray-700/50 pl-0`}>
+        
+        {/* Subtítulo: Fallo de Copia de Respaldo */}
+        <p className={`flex items-center gap-1.5 text-xs font-semibold mb-1 ${dateColor}`}>
+             <AlertTriangle className="w-3 h-3" />
+             FALLO DE COPIA DE RESPALDO
+        </p>
+
+        {/* Descripción Animada (Aplica min-h si no está expandido) */}
+        <AnimatePresence mode="wait">
             <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
+              key={isExpanded ? "expanded" : "summary"} 
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              exit={{ opacity: 0 }}
               transition={{ duration: 0.2 }}
-              className="overflow-hidden"
+              className={`overflow-hidden ${baseContentHeightClass}`}
             >
-              <p className="whitespace-pre-wrap">{fullBody}</p>
+              {getSummaryDisplay(summary)}
             </motion.div>
-          </AnimatePresence>
-        )}
+        </AnimatePresence>
       </div>
 
-      <div className="mt-3">
+      {/* 3. FOOTER (Botón Ver Completo) */}
+      <footer className="mt-auto"> 
         <button
-          className="text-xs text-indigo-400 hover:underline flex items-center"
+          className="inline-flex items-center gap-1.5 text-indigo-400 hover:text-indigo-300 font-medium transition-colors text-xs"
           onClick={onToggleExpand}
         >
-          {isExpanded ? "Ocultar detalles" : "Ver mensaje completo"}
+          {isExpanded ? "Ocultar mensaje completo" : "Ver mensaje completo"}
           {isExpanded ? (
-            <ChevronUpIcon className="ml-1 w-4 h-4" />
+            <ChevronUpIcon className="w-3.5 h-3.5" />
           ) : (
-            <ChevronDownIcon className="ml-1 w-4 h-4" />
+            <ChevronDownIcon className="w-3.5 h-3.5" />
           )}
         </button>
-      </div>
-
-      {successList.length > 0 && (
-        <div className="mt-6 border-t border-gray-700 pt-4">
-          <button
-            className="text-xs text-green-400 hover:underline flex items-center"
-            onClick={() => setShowSuccessList((prev) => !prev)}
-          >
-            {showSuccessList ? "Ocultar respaldos exitosos" : "Ver respaldos exitosos"}
-            {showSuccessList ? (
-              <ChevronUpIcon className="ml-1 w-4 h-4" />
-            ) : (
-              <ChevronDownIcon className="ml-1 w-4 h-4" />
-            )}
-          </button>
-
-          <AnimatePresence>
-            {showSuccessList && (
-              <motion.ul
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden text-sm text-gray-300 mt-3 space-y-1"
-              >
-                {successList.map((item, i) => (
-                  <li
-                    key={i}
-                    className="flex flex-wrap justify-between gap-2 border-b border-gray-700 py-1"
-                  >
-                    <span className="flex-1 min-w-[120px]">{item.clientName}</span>
-                    <span className="text-green-400 font-medium">{item.status}</span>
-                    <span className="text-xs">{formatSentDate(item.sentDate)}</span>
-                  </li>
-                ))}
-              </motion.ul>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
+      </footer>
     </DashboardCard>
   );
 };

@@ -2,10 +2,10 @@ import { useState } from "react";
 import { TriangleAlert, HardDriveIcon, Database, CheckCircle2 } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import BackupAlertCard from "@/components/Cards/BackupAlertCard";
+import SuccessBackupCard from "@/components/Cards/SuccessBackupCard"; // << IMPORTADO
 import { BackupAlerts } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
-import { format } from "date-fns";
-import { es } from "date-fns/locale";
+// Removimos la importación de format y es de date-fns, ya que se movió a SuccessBackupCard
 
 interface BackupAlertsColumnProps {
   data: BackupAlerts | undefined;
@@ -34,7 +34,7 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
           cliente,
           estado: alert.Estado,
           fechaEnvio: alert.FechaEnvio,
-          resumen: alert.Cuerpo.substring(0, 100),
+          resumen: alert.Cuerpo.substring(0, 120),
           cuerpoCompleto: alert.Cuerpo,
         }));
 
@@ -48,18 +48,21 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
           fechaEnvio: alert.FechaEnvio,
         }));
 
-  // Mostrar 9 o todos según showAllSuccess
-  const successListToShow = showAllSuccess ? successArray : successArray.slice(0, 12);
+  const successListToShow = showAllSuccess ? successArray : successArray.slice(0, 9); 
+  
+  // NOTE: formatSuccessDate ha sido movido a SuccessBackupCard.tsx
+  // const formatSuccessDate = (dateString: string) => { ... }
 
   return (
     <div className="space-y-4">
+      {/* HEADER PRINCIPAL: Título y Badge de Cantidad */}
       <div className="flex flex-wrap items-center justify-between gap-2">
         <h2 className="text-xl font-semibold flex items-center whitespace-nowrap text-white">
           <Database className="w-6 h-6 text-red-500 mr-2" aria-hidden="true" />
           Alertas de backup
         </h2>
         {!isLoading && !error && (
-          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full whitespace-nowrap">
+          <span className="text-sm text-white bg-red-500/20 px-3 py-1 rounded-full whitespace-nowrap font-medium border border-red-500/50">
             {alertsArray.length} {alertsArray.length === 1 ? "alerta" : "alertas"}
           </span>
         )}
@@ -83,20 +86,31 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
 
       {!isLoading && !error && alertsArray.length === 0 && <EmptyState />}
 
+      {/* LISTA DE ALERTAS DE FALLO (Dos columnas) */}
       {!isLoading && !error && alertsArray.length > 0 && (
         <>
-          {alertsArray.map(alert => (
-            <BackupAlertCard
-              key={alert.id}
-              clientName={alert.cliente}
-              status={alert.estado}
-              sentDate={alert.fechaEnvio}
-              summary={alert.resumen}
-              fullBody={alert.cuerpoCompleto}
-              isExpanded={expandedAlerts.has(alert.id)}
-              onToggleExpand={() => toggleExpand(alert.id)}
-            />
-          ))}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {alertsArray.map((alert, index) => {
+                const isLast = index === alertsArray.length - 1;
+                const isOddCount = alertsArray.length % 2 !== 0;
+                
+                const wrapperClasses = (isLast && isOddCount) ? "md:col-span-2" : "";
+
+                return (
+                    <div key={alert.id} className={wrapperClasses}>
+                        <BackupAlertCard
+                          clientName={alert.cliente}
+                          status={alert.estado}
+                          sentDate={alert.fechaEnvio}
+                          summary={alert.resumen}
+                          fullBody={alert.cuerpoCompleto}
+                          isExpanded={expandedAlerts.has(alert.id)}
+                          onToggleExpand={() => toggleExpand(alert.id)}
+                        />
+                    </div>
+                );
+            })}
+          </div>
 
           <DashboardCard className="p-2">
             <div className="text-center text-sm text-gray-400 font-medium">
@@ -106,42 +120,35 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
         </>
       )}
 
-      {/* Sección backups exitosos - SIEMPRE VISIBLE mostrando mínimo 9 */}
+      {/* SECCIÓN BACKUPS EXITOSOS (Ahora en dos columnas con SuccessBackupCard) */}
       {successArray.length > 0 && (
-        <div>
-          <div className="flex flex-wrap items-center justify-between mb-3 gap-2">
+        <div className="pt-2">
+          <div className="flex flex-wrap items-center justify-between mb-2 gap-2">
             <h3 className="text-lg text-green-400 font-semibold flex items-center whitespace-nowrap">
               <CheckCircle2 className="w-5 h-5 mr-2" aria-hidden="true" />
               Backups exitosos
             </h3>
           </div>
 
-          <ul
-            className="text-sm text-gray-200 divide-y divide-gray-700 border border-gray-700 rounded-xl overflow-hidden"
-          >
+          {/* GRID DE ÉXITOS - Reemplaza <ul> */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-2">
             {successListToShow
               .filter(item => item.cliente?.trim() !== "")
               .map((item, i) => (
-                <li
-                  key={i}
-                  className="flex items-center justify-between px-3 py-2 bg-black/30"
-                >
-                  <span className="w-1/3 truncate font-medium text-white">{item.cliente}</span>
-                  <span className="w-1/5 text-green-700 bg-green-300/20 px-2 py-0.5 rounded text-center text-xs font-semibold whitespace-nowrap">
-                    {item.estado}
-                  </span>
-                  <span className="w-1/2 text-right text-xs text-gray-400 whitespace-nowrap">
-                    {format(new Date(item.fechaEnvio), "eee, dd MMM yyyy HH:mm:ss", { locale: es })}
-                  </span>
-                </li>
+                <SuccessBackupCard
+                    key={i}
+                    clientName={item.cliente}
+                    status={item.estado}
+                    sentDate={item.fechaEnvio}
+                />
               ))}
-          </ul>
+          </div>
 
-          {/* Botón para mostrar más/menos solo si hay más de 9 */}
-          {successArray.length > 12 && (
+          {/* Botón para mostrar más/menos */}
+          {successArray.length > 9 && (
             <div className="text-center mt-2">
               <button
-                className="text-xs text-green-400 hover:underline"
+                className="text-xs text-green-400 hover:text-green-300 underline underline-offset-2 transition-colors"
                 onClick={() => setShowAllSuccess(prev => !prev)}
                 aria-expanded={showAllSuccess}
                 aria-controls="success-list"
@@ -157,23 +164,23 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
 };
 
 const LoadingSkeleton = () => (
+// ... (mantenemos las funciones de esqueleto y estado vacío)
   <DashboardCard>
     <div className="space-y-3">
       <div className="flex justify-between">
-        <Skeleton className="h-6 w-32" />
-        <Skeleton className="h-6 w-20" />
+        <Skeleton className="h-5 w-40" />
+        <Skeleton className="h-5 w-24" />
       </div>
-      <Skeleton className="h-4 w-full" />
       <Skeleton className="h-4 w-3/4" />
-      <div className="flex justify-end">
-        <Skeleton className="h-4 w-24" />
+      <div className="flex justify-start pt-1">
+        <Skeleton className="h-4 w-32" />
       </div>
     </div>
   </DashboardCard>
 );
 
 const EmptyState = () => (
-  <div className="border border-green-500 rounded-2xl overflow-hidden">
+  <div className="border border-green-500 rounded-xl overflow-hidden">
     <DashboardCard>
       <div className="flex flex-col items-center py-6">
         <HardDriveIcon className="text-gray-500 mb-4 h-12 w-12" aria-hidden="true" />

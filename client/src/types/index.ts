@@ -24,6 +24,19 @@ export interface AteraAlert {
   AlertMessage: string;
   incidents: AteraIncident[];
   resolved: string | null;
+  DeviceGuid: string;
+  IpAddress: string;
+  Title: string;
+  OS: string;
+  HardwareDisks?: AteraHardwareDisk[];
+  Logo?: string | null;
+}
+
+export interface AteraHardwareDisk {
+  Drive: string;
+  Free: number;
+  Total: number;
+  Used: number;
 }
 
 export interface AteraIncident {
@@ -33,9 +46,11 @@ export interface AteraIncident {
 // Aruba types
 export interface ArubaSite {
   site_name: string;
+  site_id: string;
   total_devices: number;
   total_devices_problem: number;
   devices: ArubaDevice[];
+  devices_problem?: ArubaDevice[];
 }
 
 export interface ArubaDevice {
@@ -59,7 +74,7 @@ export interface ServiceStatus {
   status: string;
   statusText: string;
   statusUrl: string;
-  icon?: JSX.Element; 
+  icon?: JSX.Element;
 }
 
 // Backup Alerts types
