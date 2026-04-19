@@ -38,17 +38,26 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
     return days * 24 * 60 + hours * 60 + minutes;
   };
 
-  // Agrupamos por client-site (primeras 2 partes de monitorName)
+  // Agrupamos para determinar redundancia (mismo Cliente/Sitio)
   const grouped: Record<string, typeof allMonitors> = {};
   allMonitors.forEach((m) => {
-    const [client, site] = m.monitorName.split(" - ");
-    const key = `${client} - ${site}`;
+    const parts = m.monitorName.split(" - ");
+    // Si tiene 3 o más partes: [Cliente] - [Sitio] - [ISP] -> Agrupamos por Cliente - Sitio
+    // Si tiene 2 partes: [Cliente] - [ISP] -> Agrupamos por Cliente
+    // Si tiene 1 parte: [Monitor] -> Grupo individual
+    let key = parts[0];
+    if (parts.length >= 3) {
+      key = `${parts[0]} - ${parts[1]}`;
+    } else if (parts.length === 2) {
+      key = parts[0];
+    }
+    
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(m);
   });
 
-  // Por cada grupo determinamos si todos los ISP están caídos (status === "Down")
-  // Luego filtramos solo los que están caídos y les asignamos isCritical según grupo
+  // Determinamos criticidad: Es crítico solo si TODOS los ISPs de un grupo están caídos.
+  // Si hay varios y al menos uno sigue UP, el caído se marca como Warning (Amarillo).
   const filteredMonitors = Object.values(grouped).flatMap(monitorsGroup => {
     const allDown = monitorsGroup.every(m => m.status === "Down");
 

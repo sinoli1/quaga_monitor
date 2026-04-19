@@ -63,7 +63,7 @@ const UptimeCard = ({
           <RowLink
             key={idx}
             href={isp.href}
-            statusClass="down"
+            statusClass={severity === 'critical' ? 'down' : 'warn'}
             statusIcon={<Unplug size={16} strokeWidth={2.5} />}
             title={isp.name}
             titleTag={isp.tag}

@@ -69,7 +69,7 @@ const ArubaCard = ({
           <RowLink
             key={idx}
             href={device.href}
-            statusClass="down"
+            statusClass={severity === 'critical' ? 'down' : 'warn'}
             statusIcon={deviceIconMap[device.type]}
             title={device.name}
             meta={[device.model, device.ip]}
