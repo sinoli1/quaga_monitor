@@ -2,7 +2,8 @@ import React from 'react';
 import RowLink from './RowLink';
 import CorrelationPill from './CorrelationPill';
 import ActiveIsps from './ActiveIsps';
-import { WifiOffIcon, ArrowUpRightIcon } from './SvgIcons';
+import { Unplug } from 'lucide-react';
+import { ArrowUpRightIcon } from './SvgIcons';
 
 export interface UptimeIsp {
   name: string;
@@ -21,7 +22,7 @@ export interface UptimeCardProps {
   severity: 'critical' | 'warning';
   badgeText: string;
   downIsps: UptimeIsp[];
-  activeIsps?: { count: number; list: string };
+  activeIsps?: { count: number; list: string[] };
   correlation?: string;
   reportedLabel: string;
   reportedTime: string;
@@ -63,7 +64,7 @@ const UptimeCard = ({
             key={idx}
             href={isp.href}
             statusClass="down"
-            statusIcon={<WifiOffIcon />}
+            statusIcon={<Unplug size={16} strokeWidth={2.5} />}
             title={isp.name}
             titleTag={isp.tag}
             titleTagClass={isp.tagClass || 'tag-inline'}

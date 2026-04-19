@@ -6,10 +6,12 @@ import Column from '@/components/Monitor/Column';
 import UptimeCard from '@/components/Monitor/UptimeCard';
 import AteraCard from '@/components/Monitor/AteraCard';
 import ArubaCard from '@/components/Monitor/ArubaCard';
+import ShowMore from '@/components/Monitor/ShowMore';
 import ExternalServicesColumn from '@/components/Columns/ExternalServicesColumn';
 import BackupAlertsColumn from '@/components/Columns/BackupAlertsColumn';
 import { usePolling } from '@/hooks/usePolling';
 import alertSound from '@/assets/sound/sound.mp3';
+import logoImg from '@/assets/images/logo.png';
 
 const tabs = [
   { id: 'infrastructure', label: 'Infraestructura' },
@@ -315,9 +317,9 @@ function processAteraData(data: any): { customers: AteraCustomerGroup[]; offline
     else badgeText = `${diskAlertCount} DISCOS`;
 
     let subtitle = '';
-    if (hasOffline && offlineAlertCount > 1) subtitle = `${offlineAlertCount} servidores offline`;
-    else if (hasOffline) subtitle = 'Servidor principal sin contacto';
-    else if (hasMemory && hasDisk) subtitle = `Memoria crítica + ${diskAlertCount} discos al límite`;
+    if (hasOffline && hasDisk) subtitle = `${offlineAlertCount} servers offline · ${diskAlertCount} discos llenos`;
+    else if (hasOffline) subtitle = 'Servidor no responde';
+    else if (hasDisk) subtitle = `${diskAlertCount} discos llenos o cerca del límite`;
     else if (hasDisk && diskAlertCount > 1) subtitle = `${diskAlertCount} alertas de disco`;
     else subtitle = 'Alerta activa';
 
@@ -437,11 +439,11 @@ function Dashboard() {
   };
 
   /* Polling queries */
-  const uptimeQuery = usePolling('/uptime');
-  const ateraQuery = usePolling('/atera');
-  const arubaQuery = usePolling('/aruba');
-  const externalServicesQuery = usePolling('/rss');
-  const backupAlertsQuery = usePolling('/gmail');
+  const uptimeQuery = usePolling('/uptime', 3000);
+  const ateraQuery = usePolling('/atera', 3000);
+  const arubaQuery = usePolling('/aruba', 3000);
+  const externalServicesQuery = usePolling('/rss', 3000);
+  const backupAlertsQuery = usePolling('/gmail', 3000);
 
   /* Process real data */
   const uptimeResult = processUptimeData(uptimeQuery.data);
@@ -469,34 +471,23 @@ function Dashboard() {
   return (
     <>
       {/* ============ TOPBAR ============ */}
-      <div className="topbar">
+      <div className="topbar flex justify-between items-center">
         <div className="brand">
-          <div className="brand-mark">Q</div>
-          <div>
-            <div className="brand-title">Quaga Monitor</div>
-            <div className="brand-sub">Infraestructura</div>
-          </div>
+          <img src={logoImg} alt="Quaga Monitor" style={{ height: '5rem' }} className="w-auto object-contain drop-shadow-[0_0_8px_rgba(134,180,255,0.3)]" />
         </div>
         <div className="topbar-right">
-          <div className="status-chip"><span className="dot"></span>Sistema activo</div>
-          <div className="refresh">
-            <RefreshIcon />
-            Próxima <strong>{uptimeQuery.secondsUntilRefetch}s</strong>
+          <div className="tabs !mb-0">
+            {tabs.map((tab) => (
+              <button
+                key={tab.id}
+                className={`tab${activeTab === tab.id ? ' active' : ''}`}
+                onClick={() => handleTabChange(tab.id)}
+              >
+                {tab.label}
+              </button>
+            ))}
           </div>
         </div>
-      </div>
-
-      {/* ============ TABS ============ */}
-      <div className="tabs">
-        {tabs.map((tab) => (
-          <button
-            key={tab.id}
-            className={`tab${activeTab === tab.id ? ' active' : ''}`}
-            onClick={() => handleTabChange(tab.id)}
-          >
-            {tab.label}
-          </button>
-        ))}
       </div>
 
       {/* ============ CONTENT ============ */}
@@ -507,7 +498,7 @@ function Dashboard() {
             ...(uptimeResult.criticalCount > 0 ? [{ label: `${uptimeResult.criticalCount} críticos`, severity: 'critical' as const }] : []),
             ...(uptimeResult.warningCount > 0 ? [{ label: `${uptimeResult.warningCount} degradados`, severity: 'warning' as const }] : []),
           ]}>
-            {uptimeResult.sites.map((site) => {
+            {uptimeResult.sites.slice(0, 5).map((site) => {
               const downIsps = site.isps.filter(i => i.status === 'Down');
               const upIsps = site.isps.filter(i => i.status !== 'Down');
               const allDown = site.isps.every(i => i.status === 'Down');
@@ -516,7 +507,7 @@ function Dashboard() {
 
               const subtitle = allDown
                 ? (site.isps.length > 1 ? 'Corte total · todos los enlaces caídos' : 'Corte total · ISP único sin respaldo')
-                : 'Conectividad degradada · backup activo';
+                : 'Conectividad degradada · failover activo';
 
               return (
                 <UptimeCard
@@ -537,7 +528,7 @@ function Dashboard() {
                   }))}
                   activeIsps={upIsps.length > 0 ? {
                     count: upIsps.length,
-                    list: upIsps.map(i => i.name).join(' · '),
+                    list: upIsps.map(i => i.name),
                   } : undefined}
                   reportedLabel={allDown ? 'Reportado' : 'Degradado'}
                   reportedTime={formatDuration(downIsps[0]?.lastDown || 'Unknown')}
@@ -545,6 +536,46 @@ function Dashboard() {
                 />
               );
             })}
+            
+            {uptimeResult.sites.length > 5 && (
+              <ShowMore count={uptimeResult.sites.length - 5} label="clientes más">
+                {uptimeResult.sites.slice(5).map((site) => {
+                  const downIsps = site.isps.filter(i => i.status === 'Down');
+                  const upIsps = site.isps.filter(i => i.status !== 'Down');
+                  const allDown = site.isps.every(i => i.status === 'Down');
+                  const severity = allDown ? 'critical' as const : 'warning' as const;
+                  const badgeText = `${downIsps.length}/${site.isps.length} DOWN`;
+                  const subtitle = allDown ? (site.isps.length > 1 ? 'Corte total · todos los enlaces caídos' : 'Corte total · ISP único sin respaldo') : 'Conectividad degradada · failover activo';
+
+                  return (
+                    <UptimeCard
+                      key={site.siteKey}
+                      initials={site.initials}
+                      title={`${site.clientName}${site.siteName ? ` · ${site.siteName}` : ''}`.toUpperCase()}
+                      subtitle={subtitle}
+                      severity={severity}
+                      badgeText={badgeText}
+                      downIsps={downIsps.map(isp => ({
+                        name: isp.name,
+                        tag: isp.tag,
+                        tagClass: isp.tagClass,
+                        href: `https://dashboard.uptimerobot.com/monitors/${isp.monitorId}`,
+                        hostname: isp.hostname,
+                        type: isp.type,
+                        duration: formatDuration(isp.lastDown),
+                      }))}
+                      activeIsps={upIsps.length > 0 ? {
+                        count: upIsps.length,
+                        list: upIsps.map(i => i.name),
+                      } : undefined}
+                      reportedLabel={allDown ? 'Reportado' : 'Degradado'}
+                      reportedTime={formatDuration(downIsps[0]?.lastDown || 'Unknown')}
+                      clientPageUrl={site.isps[0]?.custom_url || '#'}
+                    />
+                  );
+                })}
+              </ShowMore>
+            )}
           </Column>
 
           {/* ATERA */}
@@ -553,7 +584,7 @@ function Dashboard() {
             ...(ateraResult.memoryCount > 0 ? [{ label: `${ateraResult.memoryCount} memoria`, severity: 'orange' as const }] : []),
             ...(ateraResult.diskCount > 0 ? [{ label: `${ateraResult.diskCount} disco`, severity: 'warning' as const }] : []),
           ]}>
-            {ateraResult.customers.map((customer) => (
+            {ateraResult.customers.slice(0, 5).map((customer) => (
               <AteraCard
                 key={customer.customerName}
                 initials={customer.initials}
@@ -566,6 +597,24 @@ function Dashboard() {
                 reportedTime={customer.reportedTime}
               />
             ))}
+            
+            {ateraResult.customers.length > 5 && (
+              <ShowMore count={ateraResult.customers.length - 5} label="clientes más">
+                {ateraResult.customers.slice(5).map((customer) => (
+                  <AteraCard
+                    key={customer.customerName}
+                    initials={customer.initials}
+                    title={customer.customerName.toUpperCase()}
+                    subtitle={customer.subtitle}
+                    severity={customer.severity}
+                    badgeText={customer.badgeText}
+                    alerts={customer.alerts}
+                    reportedLabel={customer.reportedLabel}
+                    reportedTime={customer.reportedTime}
+                  />
+                ))}
+              </ShowMore>
+            )}
           </Column>
 
           {/* ARUBA */}
@@ -573,7 +622,7 @@ function Dashboard() {
             ...(arubaResult.criticalCount > 0 ? [{ label: `${arubaResult.criticalCount} sitios`, severity: 'critical' as const }] : []),
             ...(arubaResult.warningCount > 0 ? [{ label: `${arubaResult.warningCount} problemas`, severity: 'warning' as const }] : []),
           ]}>
-            {arubaResult.sites.map((site, idx) => (
+            {arubaResult.sites.slice(0, 5).map((site, idx) => (
               <ArubaCard
                 key={`aruba-${idx}`}
                 initials={site.initials}
@@ -587,6 +636,25 @@ function Dashboard() {
                 reportedTime={site.reportedTime}
               />
             ))}
+            
+            {arubaResult.sites.length > 5 && (
+              <ShowMore count={arubaResult.sites.length - 5} label="sitios más">
+                {arubaResult.sites.slice(5).map((site, idx) => (
+                  <ArubaCard
+                    key={`aruba-${idx}`}
+                    initials={site.initials}
+                    title={site.title.toUpperCase()}
+                    subtitle={site.subtitle}
+                    severity={site.severity}
+                    badgeText={site.badgeText}
+                    devices={site.devices}
+                    maxVisible={3}
+                    reportedLabel={site.reportedLabel}
+                    reportedTime={site.reportedTime}
+                  />
+                ))}
+              </ShowMore>
+            )}
           </Column>
         </div>
       ) : (
