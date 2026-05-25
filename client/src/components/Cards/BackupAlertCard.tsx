@@ -1,13 +1,6 @@
-import {
-  ChevronDownIcon,
-  ChevronUpIcon,
-  MailX,
-} from "lucide-react";
-import DashboardCard from "@/components/Dashboard/Card";
-import { motion, AnimatePresence } from "framer-motion";
-import { format } from "date-fns";
+import { ExternalLink, Clock } from "lucide-react";
+import { format, isToday, isYesterday } from "date-fns";
 import { es } from "date-fns/locale";
-import { useState } from "react";
 
 interface BackupAlertCardProps {
   clientName: string;
@@ -15,127 +8,128 @@ interface BackupAlertCardProps {
   sentDate: string;
   summary: string;
   fullBody: string;
+  gmailLink?: string;
   isExpanded: boolean;
   onToggleExpand: () => void;
-  successList?: { clientName: string; status: string; sentDate: string }[];
 }
+
+const parseDate = (dateString: string): Date | null => {
+  try {
+    const clean = dateString.replace(/\s*\(.*?\)$/, "");
+    const d = new Date(clean);
+    return isNaN(d.getTime()) ? null : d;
+  } catch {
+    return null;
+  }
+};
+
+const formatAbsLabel = (date: Date): string => {
+  if (isToday(date)) return `Hoy ${format(date, "HH:mm")}`;
+  if (isYesterday(date)) return `Ayer ${format(date, "HH:mm")}`;
+  return format(date, "EEE dd/MM · HH:mm", { locale: es });
+};
+
+// Short relative time: "hace 3h", "hace 45m", "hace 2d"
+const formatRelTime = (date: Date): string => {
+  const mins = Math.floor((Date.now() - date.getTime()) / 60000);
+  if (mins < 60) return `hace ${mins}m`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `hace ${hours}h`;
+  return `hace ${Math.floor(hours / 24)}d`;
+};
+
+const extractSource = (name: string): string => {
+  const parts = name.split(/\s*[-–]\s*/);
+  return parts.length >= 2 ? parts[parts.length - 1].trim() : "Backup";
+};
+
+const PREVIEW_LEN = 320;
+const makePreview = (body: string): string => {
+  const clean = body.trim().replace(/\n{3,}/g, "\n\n");
+  if (clean.length <= PREVIEW_LEN) return clean;
+  const cut = clean.lastIndexOf(" ", PREVIEW_LEN);
+  return clean.substring(0, cut > 0 ? cut : PREVIEW_LEN) + "…";
+};
 
 const BackupAlertCard = ({
   clientName,
   status,
   sentDate,
-  summary,
   fullBody,
+  gmailLink,
   isExpanded,
   onToggleExpand,
-  successList = [],
 }: BackupAlertCardProps) => {
-  const [showSuccessList, setShowSuccessList] = useState(false);
+  const isFailed = status.toLowerCase().includes("failed");
+  const severityClass = isFailed ? "critical" : "warning";
 
-  const getStatusColor = (status: string) => {
-    const lower = status.toLowerCase();
-    if (lower.includes("failed")) return "text-red-500 border-red-500";
-    if (lower.includes("warning")) return "text-yellow-500 border-yellow-500";
-    return "text-gray-500 border-gray-500";
-  };
-
-  const formatSentDate = (dateString: string) => {
-    try {
-      const cleanDate = dateString.replace(/\s*\(.*?\)$/, "");
-      const date = new Date(cleanDate);
-      return format(date, "dd/MM HH:mm", { locale: es });
-    } catch {
-      return dateString;
-    }
-  };
+  const date = parseDate(sentDate);
+  const absLabel = date ? formatAbsLabel(date) : sentDate;
+  const relLabel = date ? formatRelTime(date) : "";
+  const source = extractSource(clientName);
+  const preview = makePreview(fullBody);
 
   return (
-    <DashboardCard>
-      <div className="flex justify-between items-start mb-3">
-        <div className="flex items-center gap-2 text-indigo-300">
-          <MailX className="w-5 h-5" />
-          <h3 className="text-lg font-semibold text-white">
-            {clientName.toUpperCase()}
-          </h3>
+    <div className={`backup-item ${severityClass}`}>
+      <div className="backup-head">
+        <div className="backup-id">
+          <div className="backup-tech-icon">
+            {clientName.substring(0, 2).toUpperCase()}
+          </div>
+          <div className="backup-title-wrap">
+            <div className="backup-title">{clientName.toUpperCase()}</div>
+            <div className="backup-subtitle">
+              <span className="backup-subtitle-full">Fallo de respaldo · {source}</span>
+              <span className="backup-subtitle-short">Fallo de {source}</span>
+            </div>
+          </div>
         </div>
-        <span className={`border-l-4 pl-2 text-sm font-medium ${getStatusColor(status)}`}>
-          {formatSentDate(sentDate)}
-        </span>
+        <div className="backup-date">
+          <div className="backup-date-main">
+            <Clock size={11} />
+            <span className="backup-date-abs">{absLabel}</span>
+          </div>
+          {relLabel && <span className="backup-date-rel">{relLabel}</span>}
+        </div>
       </div>
 
-      <div className="text-sm text-gray-400">
-        {!isExpanded ? (
-          <p>
-            {summary.length > 120 ? summary.substring(0, 120) + "..." : summary}
-          </p>
-        ) : (
-          <AnimatePresence>
-            <motion.div
-              initial={{ opacity: 0, height: 0 }}
-              animate={{ opacity: 1, height: "auto" }}
-              exit={{ opacity: 0, height: 0 }}
-              transition={{ duration: 0.2 }}
-              className="overflow-hidden"
-            >
-              <p className="whitespace-pre-wrap">{fullBody}</p>
-            </motion.div>
-          </AnimatePresence>
+      <div
+        className={`backup-body ${isExpanded ? "expanded" : "collapsed"}`}
+        onClick={onToggleExpand}
+      >
+        {isExpanded ? fullBody.trim() : preview}
+      </div>
+
+      <div className="backup-foot">
+        <span className="sev-tag" style={{
+          fontSize: "9.5px",
+          fontWeight: 700,
+          letterSpacing: "0.06em",
+          textTransform: "uppercase",
+          padding: "3px 8px",
+          borderRadius: "4px",
+          fontFamily: "'JetBrains Mono', monospace",
+          background: isFailed ? "var(--critical-bg)" : "var(--warning-bg)",
+          color: isFailed ? "var(--critical-soft)" : "var(--warning-soft)",
+          border: `1px solid ${isFailed ? "var(--critical-border)" : "var(--warning-border)"}`,
+        }}>
+          {isFailed ? "FAILED" : "WARNING"}
+        </span>
+
+        {gmailLink && (
+          <a
+            href={gmailLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="backup-link"
+            onClick={(e) => e.stopPropagation()}
+          >
+            Ver correo
+            <ExternalLink size={12} />
+          </a>
         )}
       </div>
-
-      <div className="mt-3">
-        <button
-          className="text-xs text-indigo-400 hover:underline flex items-center"
-          onClick={onToggleExpand}
-        >
-          {isExpanded ? "Ocultar detalles" : "Ver mensaje completo"}
-          {isExpanded ? (
-            <ChevronUpIcon className="ml-1 w-4 h-4" />
-          ) : (
-            <ChevronDownIcon className="ml-1 w-4 h-4" />
-          )}
-        </button>
-      </div>
-
-      {successList.length > 0 && (
-        <div className="mt-6 border-t border-gray-700 pt-4">
-          <button
-            className="text-xs text-green-400 hover:underline flex items-center"
-            onClick={() => setShowSuccessList((prev) => !prev)}
-          >
-            {showSuccessList ? "Ocultar respaldos exitosos" : "Ver respaldos exitosos"}
-            {showSuccessList ? (
-              <ChevronUpIcon className="ml-1 w-4 h-4" />
-            ) : (
-              <ChevronDownIcon className="ml-1 w-4 h-4" />
-            )}
-          </button>
-
-          <AnimatePresence>
-            {showSuccessList && (
-              <motion.ul
-                initial={{ opacity: 0, height: 0 }}
-                animate={{ opacity: 1, height: "auto" }}
-                exit={{ opacity: 0, height: 0 }}
-                transition={{ duration: 0.3 }}
-                className="overflow-hidden text-sm text-gray-300 mt-3 space-y-1"
-              >
-                {successList.map((item, i) => (
-                  <li
-                    key={i}
-                    className="flex flex-wrap justify-between gap-2 border-b border-gray-700 py-1"
-                  >
-                    <span className="flex-1 min-w-[120px]">{item.clientName}</span>
-                    <span className="text-green-400 font-medium">{item.status}</span>
-                    <span className="text-xs">{formatSentDate(item.sentDate)}</span>
-                  </li>
-                ))}
-              </motion.ul>
-            )}
-          </AnimatePresence>
-        </div>
-      )}
-    </DashboardCard>
+    </div>
   );
 };
 

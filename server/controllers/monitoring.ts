@@ -1,6 +1,7 @@
 import axios from 'axios';
 
-const API_BASE_URL = 'http://10.200.0.212:5000';
+const API_BASE_URL = 'http://10.200.0.161:5000';
+const TUNNELS_API_URL = 'http://10.200.0.161:1455';
 
 // Service functions
 const getArubaData = async () => {
@@ -39,6 +40,16 @@ const getGmailBackupAlerts = async () => {
     return response.data;
   } catch (error) {
     console.error("Error fetching Gmail Backup Alerts data:", error);
+    throw error;
+  }
+};
+
+const getTunnelsData = async () => {
+  try {
+    const response = await axios.get(`${TUNNELS_API_URL}/api/summary`);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching Tunnels data:", error);
     throw error;
   }
 };
@@ -95,6 +106,15 @@ export const getGmailBackupAlertsController = async () => {
     return await getGmailBackupAlerts();
   } catch (error) {
     console.error("Error in Gmail Backup Alerts controller:", error);
+    throw error;
+  }
+};
+
+export const getTunnelsController = async () => {
+  try {
+    return await getTunnelsData();
+  } catch (error) {
+    console.error("Error in Tunnels controller:", error);
     throw error;
   }
 };

@@ -29,12 +29,12 @@ function App() {
         </div>
 
         {/* Contenido principal */}
-        <div className="flex-1 relative z-10">
+        <div className="flex-1 relative z-10 w-full max-w-[1400px] 2xl:max-w-[1536px] mx-auto px-3 sm:px-5 md:px-8 pt-5 sm:pt-8 pb-4 md:pb-20">
           <Router />
           <Toaster />
         </div>
-<footer
-  className="hidden md:flex
+        <footer
+          className="hidden md:flex
     fixed bottom-0 left-1/2
     transform -translate-x-1/2
     backdrop-blur-sm
@@ -45,18 +45,18 @@ function App() {
     z-50
     shadow
   "
->
-  Propiedad intelectual de&nbsp;
-  <a
-    href="https://quaga.com"
-    target="_blank"
-    rel="noopener noreferrer"
-    className="text-blue-500 hover:underline"
-  >
-    QUAGA SRL
-  </a>
-  &nbsp;· {new Date().getFullYear()}
-</footer>
+        >
+          Propiedad intelectual de&nbsp;
+          <a
+            href="https://quaga.com"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-blue-500 hover:underline"
+          >
+            QUAGA SRL
+          </a>
+          &nbsp;· {new Date().getFullYear()}
+        </footer>
 
       </div>
     </QueryClientProvider>

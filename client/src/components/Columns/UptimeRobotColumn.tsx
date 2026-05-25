@@ -1,5 +1,4 @@
-import { TriangleAlert, Globe } from "lucide-react";
-import { ShieldCheck } from "lucide-react";
+import { ShieldCheck, Globe, CloudOff } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import UptimeRobotCard from "@/components/Cards/UptimeRobotCard";
 import { UptimeMonitor } from "@/types";
@@ -31,25 +30,34 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
     if (time === "Unknown") return Number.MAX_VALUE;
     const daysMatch = time.match(/(\d+)\s+days?/);
     const timeMatch = time.match(/(\d+):(\d+):(\d+)/);
-    
+
     const days = daysMatch ? parseInt(daysMatch[1]) : 0;
     const hours = timeMatch ? parseInt(timeMatch[1]) : 0;
     const minutes = timeMatch ? parseInt(timeMatch[2]) : 0;
 
     return days * 24 * 60 + hours * 60 + minutes;
   };
-  
-  // Agrupamos por client-site (primeras 2 partes de monitorName)
+
+  // Agrupamos para determinar redundancia (mismo Cliente/Sitio)
   const grouped: Record<string, typeof allMonitors> = {};
   allMonitors.forEach((m) => {
-    const [client, site] = m.monitorName.split(" - ");
-    const key = `${client} - ${site}`;
+    const parts = m.monitorName.split(" - ");
+    // Si tiene 3 o más partes: [Cliente] - [Sitio] - [ISP] -> Agrupamos por Cliente - Sitio
+    // Si tiene 2 partes: [Cliente] - [ISP] -> Agrupamos por Cliente
+    // Si tiene 1 parte: [Monitor] -> Grupo individual
+    let key = parts[0];
+    if (parts.length >= 3) {
+      key = `${parts[0]} - ${parts[1]}`;
+    } else if (parts.length === 2) {
+      key = parts[0];
+    }
+    
     if (!grouped[key]) grouped[key] = [];
     grouped[key].push(m);
   });
 
-  // Por cada grupo determinamos si todos los ISP están caídos (status === "Down")
-  // Luego filtramos solo los que están caídos y les asignamos isCritical según grupo
+  // Determinamos criticidad: Es crítico solo si TODOS los ISPs de un grupo están caídos.
+  // Si hay varios y al menos uno sigue UP, el caído se marca como Warning (Amarillo).
   const filteredMonitors = Object.values(grouped).flatMap(monitorsGroup => {
     const allDown = monitorsGroup.every(m => m.status === "Down");
 
@@ -62,15 +70,15 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
   });
 
   filteredMonitors.sort((a, b) => {
-  // Primero los críticos
-  if (a.isCritical !== b.isCritical) {
-    return a.isCritical ? -1 : 1;
-  }
+    // Primero los críticos
+    if (a.isCritical !== b.isCritical) {
+      return a.isCritical ? -1 : 1;
+    }
 
-  // Si ambos son iguales en criticidad, ordenar por antigüedad (más reciente primero)
-  const timeA = parseUptimeString(a.lastDown);
-  const timeB = parseUptimeString(b.lastDown);
-  return timeB - timeA; // menor tiempo = más reciente = más arriba
+    // Si ambos son iguales en criticidad, ordenar por antigüedad (más reciente primero)
+    const timeA = parseUptimeString(a.lastDown);
+    const timeB = parseUptimeString(b.lastDown);
+    return timeB - timeA; // menor tiempo = más reciente = más arriba
   });
 
   return (
@@ -81,9 +89,16 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
           Uptime Robot
         </h2>
         {!isLoading && !error && (
-          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
-            {filteredMonitors.length} {filteredMonitors.length === 1 ? 'incidente' : 'incidentes'}
-          </span>
+          <div className="flex gap-2">
+            {filteredMonitors.filter(m => m.isCritical).length > 0 && (
+              <span className="text-sm text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+                {filteredMonitors.filter(m => m.isCritical).length} sin internet
+              </span>
+            )}
+            <span className="text-sm text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
+              {filteredMonitors.filter(m => !m.isCritical).length} revisar
+            </span>
+          </div>
         )}
       </div>
 
@@ -95,12 +110,18 @@ const UptimeRobotColumn = ({ data, isLoading, error }: UptimeRobotColumnProps) =
       )}
 
       {error && (
-        <DashboardCard>
-          <div className="flex items-center text-destructive gap-2">
-            <TriangleAlert className="h-5 w-5" />
-            <span>Fallo al cargar los datos de Uptime Robot</span>
+        <DashboardCard variant="critical">
+          <div className="flex flex-col items-center text-center py-6">
+            <CloudOff className="text-red-500 mb-3 h-14 w-14 animate-pulse" />
+            <h3 className="text-lg font-semibold text-red-600">
+              Error al conectar con UptimeRobot
+            </h3>
+            <p className="text-sm text-red-400 mt-1">
+              No se pudieron cargar los datos de la API.
+            </p>
           </div>
         </DashboardCard>
+
       )}
 
       {!isLoading && !error && filteredMonitors.length === 0 && (
@@ -150,15 +171,13 @@ const LoadingSkeleton = () => (
 );
 
 const EmptyState = () => (
-  <div className="border border-green-500 rounded-2xl overflow-hidden">
-    <DashboardCard>
-      <div className="flex flex-col items-center py-6">
-        <ShieldCheck className="text-green-500 mb-4 h-12 w-12" />
-        <p className="text-green-600 mb-1">Todos los monitores están operativos</p>
-        <p className="text-xs text-green-500">No se detectaron incidentes de conectividad</p>
-      </div>
-    </DashboardCard>
-  </div>
+  <DashboardCard variant="success">
+    <div className="flex flex-col items-center py-6">
+      <ShieldCheck className="text-green-500 mb-4 h-12 w-12" />
+      <p className="text-green-600 mb-1">Todos los monitores están operativos</p>
+      <p className="text-xs text-green-500">No se detectaron incidentes de conectividad</p>
+    </div>
+  </DashboardCard>
 );
 
 export default UptimeRobotColumn;

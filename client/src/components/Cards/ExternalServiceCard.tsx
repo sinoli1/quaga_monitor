@@ -1,4 +1,3 @@
-import { ExternalLinkIcon } from "lucide-react";
 import { ServiceStatus } from "@/types";
 
 interface ExternalServiceCardProps {
@@ -7,31 +6,33 @@ interface ExternalServiceCardProps {
 
 const ExternalServiceCard = ({ service }: ExternalServiceCardProps) => {
   const isOperational = service.status === "Up";
+  const severityClass = isOperational ? '' : 'down';
 
   return (
-    <div className="space-y-2 p-3 rounded-lg bg-background/50">
-      <div className="flex flex-wrap gap-2 justify-between items-center">
-        <h3 className="font-medium text-sm flex items-center gap-2">
-          {service.icon}
-          {service.name}
-        </h3>
-        <div className={`status-badge ${isOperational ? 'status-success' : 'status-error'} min-w-min truncate`}>
-          <span className="status-badge-dot animate-glow-pulse"></span>
-          <span className="truncate">
-            {isOperational ? "Operativo" : "Incidente"}
-          </span>
-        </div>
+    <a className={`svc ${severityClass}`} href={service.statusUrl} target="_blank" rel="noopener noreferrer">
+      <div style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        {service.icon}
       </div>
-      <a 
-        href={service.statusUrl} 
-        target="_blank" 
-        rel="noopener noreferrer"
-        className="text-xs text-primary flex items-center hover:underline"
-      >
-        Estado del servicio
-        <ExternalLinkIcon className="ml-1 h-3 w-3" />
-      </a>
-    </div>
+      <div className="svc-body">
+        <div className="svc-name">{service.name}</div>
+      </div>
+      
+      <div style={{
+          fontSize: '9.5px',
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
+          padding: '3px 8px',
+          borderRadius: '4px',
+          fontFamily: "'JetBrains Mono', monospace",
+          background: isOperational ? 'var(--ok-bg)' : 'var(--critical-bg)',
+          color: isOperational ? 'var(--ok-soft)' : 'var(--critical-soft)',
+          border: `1px solid ${isOperational ? 'var(--ok-border)' : 'var(--critical-border)'}`,
+          flexShrink: 0
+      }}>
+        {isOperational ? 'Activo' : 'Incidente'}
+      </div>
+    </a>
   );
 };
 

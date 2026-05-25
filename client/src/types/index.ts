@@ -24,6 +24,19 @@ export interface AteraAlert {
   AlertMessage: string;
   incidents: AteraIncident[];
   resolved: string | null;
+  DeviceGuid: string;
+  IpAddress: string;
+  Title: string;
+  OS: string;
+  HardwareDisks?: AteraHardwareDisk[];
+  Logo?: string | null;
+}
+
+export interface AteraHardwareDisk {
+  Drive: string;
+  Free: number;
+  Total: number;
+  Used: number;
 }
 
 export interface AteraIncident {
@@ -33,9 +46,11 @@ export interface AteraIncident {
 // Aruba types
 export interface ArubaSite {
   site_name: string;
+  site_id: string;
   total_devices: number;
   total_devices_problem: number;
   devices: ArubaDevice[];
+  devices_problem?: ArubaDevice[];
 }
 
 export interface ArubaDevice {
@@ -59,7 +74,7 @@ export interface ServiceStatus {
   status: string;
   statusText: string;
   statusUrl: string;
-  icon?: JSX.Element; 
+  icon?: JSX.Element;
 }
 
 // Backup Alerts types
@@ -71,6 +86,26 @@ export interface BackupAlert {
   Estado: string;
   FechaEnvio: string;
   Cuerpo: string;
+  CuerpoTraducido?: string;
+  GmailLink?: string;
+}
+
+// Tunnels types
+export type TunnelStatus = 'healthy' | 'degraded' | 'down' | 'inactive' | 'unknown';
+
+export interface Tunnel {
+  id: string;
+  name: string;
+  status: TunnelStatus;
+  connections: number;
+  last_seen_at: string;
+}
+
+export interface TunnelsSummary {
+  counts: Record<TunnelStatus, number>;
+  tunnels: Tunnel[];
+  total: number;
+  last_poll: string;
 }
 
 // Dashboard Status Summary

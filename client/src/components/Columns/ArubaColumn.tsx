@@ -1,9 +1,8 @@
-import { TriangleAlert, WifiIcon } from "lucide-react";
+import { CloudOff, WifiIcon } from "lucide-react";
 import DashboardCard from "@/components/Dashboard/Card";
 import ArubaCard from "@/components/Cards/ArubaCard";
 import { ArubaSite } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
-
 
 interface ArubaColumnProps {
   data: { data: ArubaSite[]; timestamp: string } | undefined;
@@ -11,8 +10,22 @@ interface ArubaColumnProps {
   error: Error | null;
 }
 
+// Función para determinar si un sitio es crítico
+const isSiteCritical = (site: ArubaSite) => {
+  return site.total_devices_problem === site.total_devices;
+};
+
 const ArubaColumn = ({ data, isLoading, error }: ArubaColumnProps) => {
   const affectedSites = data?.data.filter(site => site.total_devices_problem > 0) || [];
+
+  // Ordenar sitios: críticos primero
+  const sortedAffectedSites = affectedSites.sort((a, b) => {
+    const aIsCritical = isSiteCritical(a);
+    const bIsCritical = isSiteCritical(b);
+
+    // Críticos primero
+    return Number(bIsCritical) - Number(aIsCritical);
+  });
 
   return (
     <div className="space-y-4">
@@ -22,19 +35,31 @@ const ArubaColumn = ({ data, isLoading, error }: ArubaColumnProps) => {
           Aruba
         </h2>
         {!isLoading && !error && (
-          <span className="text-sm text-white bg-lime-500/20 px-2 py-0.5 rounded-full">
-            {affectedSites.length} {affectedSites.length === 1 ? 'sitio afectado' : 'sitios afectados'}
-          </span>
+          <div className="flex gap-2">
+            {affectedSites.filter(s => isSiteCritical(s)).length > 0 && (
+              <span className="text-sm text-red-400 bg-red-500/10 px-2 py-0.5 rounded-full border border-red-500/20">
+                {affectedSites.filter(s => isSiteCritical(s)).length} caídos
+              </span>
+            )}
+            <span className="text-sm text-yellow-400 bg-yellow-500/10 px-2 py-0.5 rounded-full border border-yellow-500/20">
+              {affectedSites.filter(s => !isSiteCritical(s)).length} con problemas
+            </span>
+          </div>
         )}
       </div>
 
       {isLoading && <LoadingSkeleton />}
 
       {error && (
-        <DashboardCard>
-          <div className="flex items-center text-destructive gap-2">
-            <TriangleAlert className="h-5 w-5" />
-            <span>Error al pedir los datos de Aruba</span>
+        <DashboardCard variant="critical">
+          <div className="flex flex-col items-center text-center py-6">
+            <CloudOff className="text-red-500 mb-3 h-14 w-14 animate-pulse" />
+            <h3 className="text-lg font-semibold text-red-600">
+              Error al conectar con Aruba
+            </h3>
+            <p className="text-sm text-red-400 mt-1">
+              No se pudieron cargar los datos de la API.
+            </p>
           </div>
         </DashboardCard>
       )}
@@ -43,7 +68,7 @@ const ArubaColumn = ({ data, isLoading, error }: ArubaColumnProps) => {
 
       {!isLoading && !error && affectedSites.length > 0 && (
         <>
-          {affectedSites.map((site, index) => (
+          {sortedAffectedSites.map((site, index) => (
             <ArubaCard
               key={`aruba-site-${index}`}
               siteName={site.site_name}
@@ -79,7 +104,7 @@ const LoadingSkeleton = () => (
 );
 
 const EmptyState = () => (
-  <DashboardCard className="border border-green-500">
+  <DashboardCard variant="success">
     <div className="flex flex-col items-center py-6">
       <WifiIcon className="text-green-500 mb-4 h-12 w-12" />
       <p className="text-green-600 mb-1">Todos los dispositivos conectados</p>
