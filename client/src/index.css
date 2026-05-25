@@ -8,7 +8,7 @@
   }
 
   /* 🌞 Tema claro (por defecto) */
-  .dark {
+  .root {
     --background: 0 0% 100%;
     --foreground: 222.2 47.4% 11.2%;
 
@@ -46,9 +46,9 @@
     --radius: 0.75rem;
   }
 
-  /* 🌙 Tema oscuro */
-  :root {
-    --background: 217 33% 11%;
+  /* 🌙 Tema oscuro  217*/
+  :dark {
+    --background: 50 33% 11%;
     --foreground: 210 20% 98%;
 
     --card: 215 25% 17% / 0.6;
@@ -140,7 +140,7 @@
   .shape {
     position: absolute;
     border-radius: 9999px;
-    filter: blur(40px);
+    filter: blur(2px);
     opacity: 0.5;
     mix-blend-mode: screen;
     animation: float 10s ease-in-out infinite alternate;

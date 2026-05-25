@@ -11,8 +11,11 @@ interface BackupAlertsColumnProps {
   error: Error | null;
 }
 
+const VISIBLE_LIMIT = 6;
+
 const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps) => {
   const [expandedAlerts, setExpandedAlerts] = useState<Set<string>>(new Set());
+  const [showAll, setShowAll] = useState(false);
 
   const toggleExpand = (alertId: string) => {
     setExpandedAlerts(prev => {
@@ -39,11 +42,14 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
         };
       });
 
+  const visibleAlerts = showAll ? failedArray : failedArray.slice(0, VISIBLE_LIMIT);
+  const hiddenCount = failedArray.length - VISIBLE_LIMIT;
+
   return (
     <div className="col">
       <div className="col-head" style={{ minHeight: '44px' }}>
-        <div className="col-title flex items-center gap-2" style={{ fontSize: '18px', fontWeight: 700 }}>
-          <Database className="w-5 h-5 text-[#ff5d7a]" aria-hidden="true" />
+        <div className="col-title flex items-center gap-2" style={{ fontSize: '28px', fontWeight: 700 }}>
+          <Database className="w-7 h-7 text-[#ff5d7a]" aria-hidden="true" />
           ALERTAS DE BACKUP
         </div>
 
@@ -73,34 +79,42 @@ const BackupAlertsColumn = ({ data, isLoading, error }: BackupAlertsColumnProps)
       {!isLoading && !error && failedArray.length === 0 && <EmptyState />}
 
       {!isLoading && !error && failedArray.length > 0 && (
-        <>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-start">
-            {failedArray.map((alert, index) => {
-              return (
-                <BackupAlertCard
-                  key={alert.id}
-                  clientName={alert.cliente}
-                  status={alert.estado}
-                  sentDate={alert.fechaEnvio}
-                  summary={alert.resumen}
-                  fullBody={alert.cuerpoCompleto}
-                  gmailLink={alert.gmailLink}
-                  isExpanded={expandedAlerts.has(alert.id)}
-                  onToggleExpand={() => toggleExpand(alert.id)}
-                />
-              );
-            })}
-          </div>
-        </>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-stretch">
+          {visibleAlerts.map((alert) => {
+            return (
+              <BackupAlertCard
+                key={alert.id}
+                clientName={alert.cliente}
+                status={alert.estado}
+                sentDate={alert.fechaEnvio}
+                summary={alert.resumen}
+                fullBody={alert.cuerpoCompleto}
+                gmailLink={alert.gmailLink}
+                isExpanded={expandedAlerts.has(alert.id)}
+                onToggleExpand={() => toggleExpand(alert.id)}
+              />
+            );
+          })}
+        </div>
       )}
 
       {!isLoading && !error && (
-        <div className="text-left mt-6">
+        <div className="grid grid-cols-6 gap-3 mt-6">
+          {!showAll && hiddenCount > 0 && (
+            <button
+              type="button"
+              className="alerts-show-more col-span-4"
+              onClick={() => setShowAll(true)}
+            >
+              + {hiddenCount} alertas más
+            </button>
+          )}
           <a
             href="https://backup.quaga.ar"
             target="_blank"
             rel="noopener noreferrer"
-            className="backup-main-btn"
+            className={`backup-main-btn justify-center ${!showAll && hiddenCount > 0 ? 'col-span-2' : 'col-span-6'}`}
+            style={{ width: '100%' }}
           >
             Ver historial completo en backup.quaga.ar
             <ExternalLink size={14} />

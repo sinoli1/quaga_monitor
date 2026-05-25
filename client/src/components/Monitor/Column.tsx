@@ -24,10 +24,10 @@ const Column = ({ kind, title, counts, children }: ColumnProps) => {
   return (
     <div className="col">
       <div className="col-head">
-        <div className={`col-title ${kind} flex items-center gap-2`} style={{ fontSize: '18px', fontWeight: 700 }}>
-          {kind === 'uptime' && <img src={uptimeIcon} alt="Uptime Robot" className="w-5 h-5" />}
-          {kind === 'atera' && <AteraLogo className="w-5 h-5 text-[#ff5d7a]" />}
-          {kind === 'aruba' && <Wifi className="w-5 h-5 text-[#ffb84d]" />}
+        <div className={`col-title ${kind} flex items-center gap-2`} style={{ fontSize: '28px', fontWeight: 700 }}>
+          {kind === 'uptime' && <img src={uptimeIcon} alt="Uptime Robot" className="w-7 h-7" />}
+          {kind === 'atera' && <AteraLogo className="w-7 h-7 text-[#ff5d7a]" />}
+          {kind === 'aruba' && <Wifi className="w-7 h-7 text-[#ffb84d]" />}
           {title}
         </div>
         <div className="col-counts">

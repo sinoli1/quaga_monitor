@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import RowLink from './RowLink';
 import CorrelationPill from './CorrelationPill';
-import ShowMore from './ShowMore';
+import TicketButton from './TicketButton';
 import { SwitchIcon, WifiIcon } from './SvgIcons';
 
 export interface ArubaDeviceRow {
@@ -31,6 +31,21 @@ const deviceIconMap = {
   ap: <WifiIcon />,
 };
 
+const buildSubject = (title: string, severity: 'critical' | 'warning', devices: ArubaDeviceRow[]): string => {
+  const emoji = severity === 'critical' ? '🔴' : '🟡';
+  const level = severity === 'critical' ? 'CRÍTICO' : 'ADVERTENCIA';
+  const allDown = severity === 'critical';
+
+  if (devices.length === 1) {
+    return `Monitoreo: ${devices[0].name} caído en ${title} - ${emoji} ${level}`;
+  }
+  if (devices.length === 2) {
+    return `Monitoreo: ${devices[0].name} y ${devices[1].name} caídos en ${title} - ${emoji} ${level}`;
+  }
+  const infra = allDown ? ' (infra completa)' : '';
+  return `Monitoreo: ${devices.length} dispositivos caídos en ${title}${infra} - ${emoji} ${level}`;
+};
+
 const ArubaCard = ({
   initials,
   title,
@@ -44,9 +59,9 @@ const ArubaCard = ({
   reportedTime,
 }: ArubaCardProps) => {
   const [expanded, setExpanded] = useState(false);
-
   const visibleDevices = expanded ? devices : devices.slice(0, maxVisible);
   const hiddenCount = devices.length - maxVisible;
+  const subject = buildSubject(title, severity, devices);
 
   return (
     <div className={`card ${severity}`}>
@@ -88,6 +103,7 @@ const ArubaCard = ({
 
       <div className="card-foot">
         <span className="reported">{reportedLabel} <strong>{reportedTime}</strong></span>
+        <TicketButton subject={subject} />
       </div>
     </div>
   );

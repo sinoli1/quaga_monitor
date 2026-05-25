@@ -14,6 +14,7 @@ import { MiAfip } from "@/components/Icons/ARCA";
 import { Atera } from "@/components/Icons/Atera";
 import { UptimeRobot as UptimeRobotIcon } from "@/components/Icons/UptimeRobot";
 import { format } from "date-fns";
+import { es } from "date-fns/locale";
 import {
   SiGoogle,
   SiClickup,
@@ -93,19 +94,19 @@ const ExternalServicesColumn = ({ data, isLoading, error }: ExternalServicesColu
   }));
 
   const lastUpdated = data?.timestamp
-    ? format(new Date(data.timestamp), 'MMM d, h:mm a')
-    : 'Unknown';
+    ? format(new Date(data.timestamp), "d MMM HH:mm", { locale: es })
+    : null;
 
   return (
     <div className="col">
       <div className="col-head" style={{ minHeight: '44px' }}>
-        <div className="col-title flex items-center gap-2" style={{ fontSize: '18px', fontWeight: 700 }}>
-          <Globe className="w-5 h-5 text-[#86b4ff]" aria-hidden="true" />
+        <div className="col-title flex items-center gap-2" style={{ fontSize: '28px', fontWeight: 700 }}>
+          <Globe className="w-7 h-7 text-[#86b4ff]" aria-hidden="true" />
           SERVICIOS EXTERNOS
         </div>
         <div className="col-counts">
-          {!isLoading && !error && data && (
-            <span className="count-chip warning">Actualizado {lastUpdated}</span>
+          {!isLoading && !error && lastUpdated && (
+            <span className="count-chip warning">Act. {lastUpdated}</span>
           )}
         </div>
       </div>

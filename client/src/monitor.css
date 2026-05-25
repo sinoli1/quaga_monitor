@@ -505,6 +505,17 @@
         border: 1px solid var(--warning-border);
     }
 
+    .card-badge-link {
+        text-decoration: none;
+        cursor: pointer;
+        transition: opacity 0.15s ease, filter 0.15s ease;
+    }
+
+    .card-badge-link:hover {
+        opacity: 0.8;
+        filter: brightness(1.15);
+    }
+
     .card-badge .pulse {
         width: 5px;
         height: 5px;
@@ -676,6 +687,15 @@
         font-size: 10.5px;
         color: var(--text-muted);
         font-family: 'JetBrains Mono', monospace;
+        overflow: hidden;
+        min-width: 0;
+    }
+
+    .row-meta span:not(.sep) {
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
+        min-width: 0;
     }
 
     .row-meta .sep {
@@ -829,6 +849,29 @@
         color: var(--text);
     }
 
+    .card-ticket-btn {
+        cursor: pointer;
+        background: transparent;
+        color: rgb(129, 140, 248);
+        text-decoration: none;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+        padding: 4px 9px;
+        border-radius: 6px;
+        transition: all 0.18s ease;
+        font-size: 11px;
+        border: 1px solid rgba(99, 102, 241, 0.3);
+        font-family: inherit;
+    }
+
+    .card-ticket-btn:hover {
+        background: rgba(99, 102, 241, 0.12);
+        border-color: rgba(99, 102, 241, 0.55);
+        color: rgb(165, 180, 252);
+    }
+
     .show-more {
         margin: 2px 18px 0;
         padding: 8px 12px;
@@ -870,6 +913,31 @@
         transform: translateY(-1px);
     }
 
+    .alerts-show-more {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+        background: rgba(255, 93, 122, 0.05);
+        border: 1px solid rgba(255, 93, 122, 0.18);
+        color: #ff5d7a;
+        font-weight: 500;
+        padding: 8px 16px;
+        border-radius: var(--radius-sm);
+        transition: all 0.2s ease;
+        font-size: 12.5px;
+        opacity: 0.9;
+        cursor: pointer;
+        font-family: inherit;
+    }
+
+    .alerts-show-more:hover {
+        background: rgba(255, 93, 122, 0.1);
+        border-color: rgba(255, 93, 122, 0.32);
+        opacity: 1;
+        transform: translateY(-1px);
+    }
+
     /* =========================================================
        TAB 2 · Servicios y Backup
        ========================================================= */
@@ -904,6 +972,11 @@
         background: linear-gradient(180deg, rgba(255, 93, 122, 0.04), rgba(255, 93, 122, 0.005));
     }
 
+    .svc.warn {
+        border-color: var(--warning-border);
+        background: linear-gradient(180deg, rgba(255, 188, 91, 0.04), rgba(255, 188, 91, 0.005));
+    }
+
     .svc-icon {
         width: 30px;
         height: 30px;
@@ -920,6 +993,12 @@
         background: var(--critical-bg);
         color: var(--critical-soft);
         border-color: var(--critical-border);
+    }
+
+    .svc.warn .svc-icon {
+        background: var(--warning-bg);
+        color: var(--warning-soft);
+        border-color: var(--warning-border);
     }
 
     .svc-icon svg {
@@ -956,6 +1035,10 @@
         color: var(--critical-soft);
     }
 
+    .svc.warn .svc-status {
+        color: var(--warning-soft);
+    }
+
     .svc-link-arrow {
         opacity: 0;
         transition: opacity 0.18s;
@@ -972,6 +1055,8 @@
         transition: all 0.25s ease;
         position: relative;
         backdrop-filter: blur(40px);
+        display: flex;
+        flex-direction: column;
     }
 
     .backup-item:hover {
@@ -1008,14 +1093,18 @@
         background: linear-gradient(90deg, transparent, rgba(255, 188, 91, 0.4), transparent);
     }
 
+    /* Subtitle variants: full on desktop, short on mobile */
+    .backup-subtitle-short {
+        display: none;
+    }
+
     .backup-head {
-        padding: 14px 16px 10px;
+        padding: 11px 14px 8px;
         display: flex;
         align-items: center;
         justify-content: space-between;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
-        cursor: pointer;
     }
 
     .backup-id {
@@ -1027,8 +1116,8 @@
     }
 
     .backup-tech-icon {
-        width: 34px;
-        height: 34px;
+        width: 30px;
+        height: 30px;
         border-radius: 9px;
         display: grid;
         place-items: center;
@@ -1080,6 +1169,9 @@
         align-items: center;
         gap: 8px;
         font-family: 'JetBrains Mono', monospace;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
     }
 
     .backup-subtitle .sev-tag {
@@ -1106,36 +1198,80 @@
 
     .backup-date {
         display: flex;
-        align-items: center;
-        gap: 6px;
-        font-family: 'JetBrains Mono', monospace;
-        font-size: 11px;
-        color: var(--text-muted);
+        flex-direction: column;
+        align-items: flex-end;
+        gap: 3px;
         flex-shrink: 0;
     }
 
-    .backup-body {
-        padding: 4px 16px 14px;
-        font-size: 12.5px;
+    .backup-date-main {
+        display: flex;
+        align-items: center;
+        gap: 5px;
         color: var(--text-soft);
-        line-height: 1.55;
-        white-space: pre-wrap;
     }
 
+    .backup-date-abs {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 12px;
+        font-weight: 600;
+        color: var(--text-soft);
+        letter-spacing: -0.01em;
+        white-space: nowrap;
+    }
+
+    .backup-date-rel {
+        font-family: 'JetBrains Mono', monospace;
+        font-size: 10px;
+        color: var(--text-muted);
+        white-space: nowrap;
+    }
+
+    .backup-body {
+        margin: 0 14px 10px;
+        padding: 8px 12px;
+        font-size: 12.5px;
+        color: var(--text-soft);
+        line-height: 1.65;
+        white-space: pre-wrap;
+        background: rgba(255, 255, 255, 0.015);
+        border: 1px solid var(--border);
+        border-radius: var(--radius-sm);
+        border-left: 2px solid var(--border-strong);
+        cursor: pointer;
+        flex: 1;
+        transition: background 0.18s;
+    }
+
+    .backup-body:hover {
+        background: rgba(255, 255, 255, 0.028);
+    }
+
+    .backup-item.critical .backup-body {
+        border-left-color: var(--critical-border);
+    }
+
+    .backup-item.warning .backup-body {
+        border-left-color: var(--warning-border);
+    }
+
+    /* Collapsed: fixed max-height with a fade-out gradient cue */
     .backup-body.collapsed {
-        display: -webkit-box;
-        -webkit-line-clamp: 2;
-        -webkit-box-orient: vertical;
+        max-height: 80px;
         overflow: hidden;
+        position: relative;
+        mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
+        -webkit-mask-image: linear-gradient(to bottom, black 55%, transparent 100%);
     }
 
     .backup-foot {
-        padding: 10px 16px;
+        padding: 8px 14px;
         border-top: 1px solid var(--border);
         background: rgba(0, 0, 0, 0.15);
         display: flex;
         justify-content: space-between;
         align-items: center;
+        margin-top: auto;
     }
 
     .backup-link {
@@ -1159,12 +1295,261 @@
         border-color: var(--border-hover);
     }
 
+    /* =====================  RESPONSIVE  ===================== */
+
     @media (max-width: 1200px) {
         .columns {
             grid-template-columns: 1fr;
         }
+    }
 
-        body {
-            padding: 24px 20px;
+    /* --- Tablet / large phone --- */
+    @media (max-width: 768px) {
+
+        .topbar {
+            margin-bottom: 20px;
+            gap: 10px;
+        }
+
+        .card-head {
+            padding: 13px 15px 10px;
+        }
+
+        .row-list {
+            padding: 0 14px 4px;
+        }
+
+        .row-link {
+            padding: 10px 10px;
+            gap: 9px;
+        }
+
+        .row-duration {
+            padding-right: 8px;
+        }
+
+        .correlation,
+        .active-isps,
+        .show-more {
+            margin-left: 14px;
+            margin-right: 14px;
+        }
+
+        .card-foot {
+            padding: 9px 15px;
+        }
+
+        .backup-head {
+            padding: 12px 14px 9px;
+        }
+
+        .backup-body {
+            padding: 4px 14px 12px;
+        }
+
+        .backup-foot {
+            padding: 9px 14px;
+        }
+    }
+
+    /* --- Phone --- */
+    @media (max-width: 480px) {
+        /* Remove heavy grid texture on small screens */
+        body::before {
+            display: none;
+        }
+
+        /* Remove expensive blur on cards for performance */
+        .card,
+        .backup-item,
+        .svc {
+            backdrop-filter: none;
+        }
+
+        /* Stack logo + tabs vertically, everything centered */
+        .topbar {
+            flex-direction: column;
+            align-items: center;
+            margin-bottom: 14px;
+            gap: 10px;
+        }
+
+        .topbar-right {
+            width: 100%;
+        }
+
+        /* Shrink logo on phone */
+        .topbar .brand img {
+            height: 3rem !important;
+        }
+
+        .tabs {
+            width: 100%;
+            padding: 3px;
+            box-sizing: border-box;
+        }
+
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 7px 8px;
+            font-size: 12px;
+            white-space: nowrap;
+        }
+
+        /* Col header: wrap counts below title when they don't fit */
+        .col-head {
+            flex-wrap: wrap;
+            row-gap: 6px;
+        }
+
+        .col-counts {
+            flex-wrap: wrap;
+            gap: 4px;
+        }
+
+        .count-chip {
+            font-size: 9.5px;
+            padding: 2px 7px;
+            white-space: nowrap;
+        }
+
+        .columns {
+            gap: 16px;
+        }
+
+        /* --- Cards --- */
+        .card-head {
+            padding: 11px 12px 9px;
+            gap: 8px;
+        }
+
+        .avatar {
+            width: 32px;
+            height: 32px;
+            font-size: 11px;
+        }
+
+        .card-title {
+            font-size: 13px;
+        }
+
+        .card-subtitle {
+            font-size: 10.5px;
+        }
+
+        .card-badge {
+            font-size: 9px;
+            padding: 3px 7px;
+            gap: 4px;
+        }
+
+        /* --- Row links --- */
+        .row-list {
+            padding: 0 10px 4px;
+            gap: 5px;
+        }
+
+        .row-link {
+            padding: 9px 9px;
+            gap: 8px;
+        }
+
+        /* Hide secondary metadata on phone — title already names the device */
+        .row-meta {
+            display: none;
+        }
+
+        .row-duration {
+            padding-right: 4px;
+            font-size: 10.5px;
+        }
+
+        .row-status {
+            width: 26px;
+            height: 26px;
+        }
+
+        /* --- Card footer --- */
+        .card-foot {
+            padding: 8px 12px;
+            gap: 6px;
+        }
+
+        /* Hide the "Reportado hace" label text, keep the time */
+        .card-foot .reported {
+            font-size: 10px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 110px;
+        }
+
+        .card-ticket-btn {
+            font-size: 10.5px;
+            padding: 4px 8px;
+            white-space: nowrap;
+        }
+
+        /* --- Misc card elements --- */
+        .correlation,
+        .active-isps,
+        .show-more {
+            margin-left: 10px;
+            margin-right: 10px;
+            font-size: 10.5px;
+        }
+
+        /* --- Backup items --- */
+        .backup-subtitle-full { display: none; }
+        .backup-subtitle-short { display: inline; }
+
+        .backup-tech-icon {
+            width: 28px;
+            height: 28px;
+            font-size: 9px;
+        }
+
+        .backup-title {
+            font-size: 12px;
+        }
+
+        .backup-subtitle {
+            font-size: 10.5px;
+        }
+
+        .backup-date-abs {
+            font-size: 11px;
+        }
+
+        .backup-head {
+            padding: 9px 11px 7px;
+            gap: 8px;
+        }
+
+        .backup-body {
+            margin: 0 11px 8px;
+            padding: 7px 10px;
+            font-size: 11.5px;
+        }
+
+        .backup-foot {
+            padding: 7px 11px;
+        }
+
+        /* Backup main button full width on phone */
+        .backup-main-btn {
+            width: 100%;
+            justify-content: center;
+            font-size: 12px;
+        }
+
+        /* Column header */
+        .col-head {
+            margin-bottom: 12px;
+        }
+
+        .col-title {
+            font-size: 14px !important;
         }
     }

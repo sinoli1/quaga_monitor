@@ -9,6 +9,7 @@ import ArubaCard from '@/components/Monitor/ArubaCard';
 import ShowMore from '@/components/Monitor/ShowMore';
 import ExternalServicesColumn from '@/components/Columns/ExternalServicesColumn';
 import BackupAlertsColumn from '@/components/Columns/BackupAlertsColumn';
+import TunnelsColumn from '@/components/Columns/TunnelsColumn';
 import { usePolling } from '@/hooks/usePolling';
 import alertSound from '@/assets/sound/sound.mp3';
 import logoImg from '@/assets/images/logo.png';
@@ -278,17 +279,23 @@ function processAteraData(data: any): { customers: AteraCustomerGroup[]; offline
             const pct = Math.round((diskData.Used / diskData.Total) * 100);
             deviceName = `${alert.DeviceName} · Disco ${drive} ${pct}%`;
             meta.length = 0;
-            meta.push(`${Math.round(diskData.Used)} GB / ${Math.round(diskData.Total)} GB`);
-            meta.push(`${Math.round(diskData.Free)} GB libres`);
+            meta.push(`${Math.round(diskData.Used / 1024)} GB / ${Math.round(diskData.Total / 1024)} GB`);
+            meta.push(`${Math.round(diskData.Free / 1024)} GB libres`);
           }
         }
       } else if (type === 'memory') {
         const memMatch = (alert.AlertMessage || '').match(/Se están consumiendo ([\d.]+)\s*GB de ([\d.]+)\s*GB/i);
+        meta.length = 0;
         if (memMatch) {
           const pct = Math.round((parseFloat(memMatch[1]) / parseFloat(memMatch[2])) * 100);
           deviceName = `${alert.DeviceName} · Memoria ${pct}%`;
-          meta.length = 0;
-          meta.push(`${memMatch[1]} GB / ${memMatch[2]} GB`);
+          meta.push(`${pct}% de RAM`);
+        } else {
+          meta.push('RAM alta');
+        }
+        if (alert.OS) {
+          const shortOS = alert.OS.replace(/Professional/gi, 'Pro').replace(/Windows/gi, 'Win').replace(/Standard/gi, '').trim();
+          meta.push(shortOS);
         }
       }
 
@@ -444,11 +451,83 @@ function Dashboard() {
   const arubaQuery = usePolling('/aruba', 3000);
   const externalServicesQuery = usePolling('/rss', 3000);
   const backupAlertsQuery = usePolling('/gmail', 3000);
+  const tunnelsQuery = usePolling('/tunnels', 3000);
 
   /* Process real data */
   const uptimeResult = processUptimeData(uptimeQuery.data);
   const ateraResult = processAteraData(ateraQuery.data);
   const arubaResult = processArubaData(arubaQuery.data);
+
+  /* ---- Correlation helpers ---- */
+  const normalizeName = (name: string) =>
+    name.toLowerCase()
+      .normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+      .replace(/[^a-z0-9\s]/g, ' ')
+      .replace(/\s+/g, ' ')
+      .trim();
+
+  const namesMatch = (a: string, b: string): boolean => {
+    const na = normalizeName(a);
+    const nb = normalizeName(b);
+    if (na === nb) return true;
+    if (na.includes(nb) || nb.includes(na)) return true;
+    const stop = new Set(['de', 'del', 'la', 'el', 'los', 'las', 'sa', 'srl', 'friar', 'grupo', 'estudio', 'distribuidora', 'laboratorio', 'transporte', 'instituto', 'fundacion', 'combustibles']);
+    const wa = na.split(' ').filter(w => w.length > 2 && !stop.has(w));
+    const wb = nb.split(' ').filter(w => w.length > 2 && !stop.has(w));
+    if (!wa.length || !wb.length) return false;
+    const shared = wa.filter(w => wb.includes(w));
+    return shared.length >= 1 && shared.length >= Math.min(wa.length, wb.length);
+  };
+
+  const getUptimeCorrelation = (clientName: string): string | undefined => {
+    const parts: string[] = [];
+    const ateraMatch = ateraResult.customers.find(c => namesMatch(c.customerName, clientName));
+    if (ateraMatch) {
+      const offline = ateraMatch.alerts.filter(a => a.type === 'offline').length;
+      parts.push(offline > 0
+        ? (offline === 1 ? 'Atera reporta servidor offline' : `Atera reporta ${offline} servidores offline`)
+        : 'Atera reporta alertas en servidor'
+      );
+    }
+    const arubaMatch = arubaResult.sites.find(s => namesMatch(s.title.split(' · ')[0], clientName));
+    if (arubaMatch) {
+      const count = arubaMatch.devices.length;
+      parts.push(count === 1 ? 'Aruba reporta 1 dispositivo caído' : `Aruba reporta ${count} dispositivos caídos`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
+
+  const getAteraCorrelation = (customerName: string): string | undefined => {
+    const parts: string[] = [];
+    const uptimeMatch = uptimeResult.sites.find(s => namesMatch(s.clientName, customerName));
+    if (uptimeMatch) {
+      const allDown = uptimeMatch.isps.every(i => i.status === 'Down');
+      parts.push(allDown ? 'Uptime reporta ISP caído · posible causa raíz' : 'Uptime reporta conectividad degradada');
+    }
+    const arubaMatch = arubaResult.sites.find(s => namesMatch(s.title.split(' · ')[0], customerName));
+    if (arubaMatch) {
+      const count = arubaMatch.devices.length;
+      parts.push(count === 1 ? 'Aruba reporta 1 dispositivo caído' : `Aruba reporta ${count} dispositivos caídos`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
+
+  const getArubaCorrelation = (siteTitle: string): string | undefined => {
+    const clientName = siteTitle.split(' · ')[0];
+    const parts: string[] = [];
+    const uptimeMatch = uptimeResult.sites.find(s => namesMatch(s.clientName, clientName));
+    if (uptimeMatch) {
+      const allDown = uptimeMatch.isps.every(i => i.status === 'Down');
+      parts.push(allDown ? 'ISP caído en Uptime · posible causa raíz' : 'Conectividad degradada en Uptime');
+    }
+    const ateraMatch = ateraResult.customers.find(c => namesMatch(c.customerName, clientName));
+    if (ateraMatch) {
+      const offline = ateraMatch.alerts.filter(a => a.type === 'offline').length;
+      if (offline > 0)
+        parts.push(offline === 1 ? 'Atera reporta servidor offline' : `Atera reporta ${offline} servidores offline`);
+    }
+    return parts.length > 0 ? parts.join(' · ') : undefined;
+  };
 
   /* Sound alert logic */
   const criticalCounts = {
@@ -533,10 +612,11 @@ function Dashboard() {
                   reportedLabel={allDown ? 'Reportado' : 'Degradado'}
                   reportedTime={formatDuration(downIsps[0]?.lastDown || 'Unknown')}
                   clientPageUrl={site.isps[0]?.custom_url || '#'}
+                  correlation={getUptimeCorrelation(site.clientName)}
                 />
               );
             })}
-            
+
             {uptimeResult.sites.length > 5 && (
               <ShowMore count={uptimeResult.sites.length - 5} label="clientes más">
                 {uptimeResult.sites.slice(5).map((site) => {
@@ -571,6 +651,7 @@ function Dashboard() {
                       reportedLabel={allDown ? 'Reportado' : 'Degradado'}
                       reportedTime={formatDuration(downIsps[0]?.lastDown || 'Unknown')}
                       clientPageUrl={site.isps[0]?.custom_url || '#'}
+                      correlation={getUptimeCorrelation(site.clientName)}
                     />
                   );
                 })}
@@ -595,9 +676,10 @@ function Dashboard() {
                 alerts={customer.alerts}
                 reportedLabel={customer.reportedLabel}
                 reportedTime={customer.reportedTime}
+                correlation={getAteraCorrelation(customer.customerName)}
               />
             ))}
-            
+
             {ateraResult.customers.length > 5 && (
               <ShowMore count={ateraResult.customers.length - 5} label="clientes más">
                 {ateraResult.customers.slice(5).map((customer) => (
@@ -611,6 +693,7 @@ function Dashboard() {
                     alerts={customer.alerts}
                     reportedLabel={customer.reportedLabel}
                     reportedTime={customer.reportedTime}
+                    correlation={getAteraCorrelation(customer.customerName)}
                   />
                 ))}
               </ShowMore>
@@ -634,9 +717,10 @@ function Dashboard() {
                 maxVisible={3}
                 reportedLabel={site.reportedLabel}
                 reportedTime={site.reportedTime}
+                correlation={getArubaCorrelation(site.title)}
               />
             ))}
-            
+
             {arubaResult.sites.length > 5 && (
               <ShowMore count={arubaResult.sites.length - 5} label="sitios más">
                 {arubaResult.sites.slice(5).map((site, idx) => (
@@ -651,6 +735,7 @@ function Dashboard() {
                     maxVisible={3}
                     reportedLabel={site.reportedLabel}
                     reportedTime={site.reportedTime}
+                    correlation={getArubaCorrelation(site.title)}
                   />
                 ))}
               </ShowMore>
@@ -658,8 +743,11 @@ function Dashboard() {
           </Column>
         </div>
       ) : (
-        <div className="grid grid-cols-1 lg:grid-cols-[1.2fr_2fr] gap-7 mt-6">
-          <ExternalServicesColumn {...externalServicesQuery} />
+        <div className="grid grid-cols-1 lg:grid-cols-[2fr_3fr] gap-7 mt-6">
+          <div className="flex flex-col gap-7">
+            <ExternalServicesColumn {...externalServicesQuery} />
+            <TunnelsColumn {...tunnelsQuery} />
+          </div>
           <BackupAlertsColumn {...backupAlertsQuery} />
         </div>
       )}

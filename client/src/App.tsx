@@ -29,7 +29,7 @@ function App() {
         </div>
 
         {/* Contenido principal */}
-        <div className="flex-1 relative z-10 w-full max-w-[1400px] 2xl:max-w-[1536px] mx-auto px-4 sm:px-6 md:px-8 pt-8 pb-20">
+        <div className="flex-1 relative z-10 w-full max-w-[1400px] 2xl:max-w-[1536px] mx-auto px-3 sm:px-5 md:px-8 pt-5 sm:pt-8 pb-4 md:pb-20">
           <Router />
           <Toaster />
         </div>

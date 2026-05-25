@@ -2,8 +2,8 @@ import React from 'react';
 import RowLink from './RowLink';
 import CorrelationPill from './CorrelationPill';
 import ActiveIsps from './ActiveIsps';
+import TicketButton from './TicketButton';
 import { Unplug } from 'lucide-react';
-import { ArrowUpRightIcon } from './SvgIcons';
 
 export interface UptimeIsp {
   name: string;
@@ -29,6 +29,19 @@ export interface UptimeCardProps {
   clientPageUrl?: string;
 }
 
+const buildSubject = (title: string, severity: 'critical' | 'warning', downIsps: UptimeIsp[]): string => {
+  const emoji = severity === 'critical' ? '🔴' : '🟡';
+  const level = severity === 'critical' ? 'CRÍTICO' : 'ADVERTENCIA';
+
+  if (downIsps.length === 1) {
+    return `Monitoreo: ${downIsps[0].name} caído en ${title} hace ${downIsps[0].duration} - ${emoji} ${level}`;
+  }
+  if (downIsps.length === 2) {
+    return `Monitoreo: ${downIsps[0].name} y ${downIsps[1].name} caídos en ${title} - ${emoji} ${level}`;
+  }
+  return `Monitoreo: ${downIsps.length} ISPs caídos en ${title} - ${emoji} ${level}`;
+};
+
 const UptimeCard = ({
   initials,
   title,
@@ -42,6 +55,8 @@ const UptimeCard = ({
   reportedTime,
   clientPageUrl,
 }: UptimeCardProps) => {
+  const subject = buildSubject(title, severity, downIsps);
+
   return (
     <div className={`card ${severity}`}>
       <div className="card-head">
@@ -52,10 +67,15 @@ const UptimeCard = ({
             <div className="card-subtitle">{subtitle}</div>
           </div>
         </div>
-        <div className={`card-badge ${severity}`}>
+        <a
+          href={clientPageUrl || '#'}
+          target="_blank"
+          rel="noopener noreferrer"
+          className={`card-badge card-badge-link ${severity}`}
+        >
           {severity === 'critical' && <span className="pulse"></span>}
           {badgeText}
-        </div>
+        </a>
       </div>
 
       <div className="row-list">
@@ -82,12 +102,7 @@ const UptimeCard = ({
 
       <div className="card-foot">
         <span className="reported">{reportedLabel} <strong>{reportedTime}</strong></span>
-        {clientPageUrl && (
-          <a className="card-link-foot" href={clientPageUrl}>
-            Página del cliente
-            <ArrowUpRightIcon size={10} />
-          </a>
-        )}
+        <TicketButton subject={subject} />
       </div>
     </div>
   );

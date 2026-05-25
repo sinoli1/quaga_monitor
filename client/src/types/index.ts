@@ -86,6 +86,26 @@ export interface BackupAlert {
   Estado: string;
   FechaEnvio: string;
   Cuerpo: string;
+  CuerpoTraducido?: string;
+  GmailLink?: string;
+}
+
+// Tunnels types
+export type TunnelStatus = 'healthy' | 'degraded' | 'down' | 'inactive' | 'unknown';
+
+export interface Tunnel {
+  id: string;
+  name: string;
+  status: TunnelStatus;
+  connections: number;
+  last_seen_at: string;
+}
+
+export interface TunnelsSummary {
+  counts: Record<TunnelStatus, number>;
+  tunnels: Tunnel[];
+  total: number;
+  last_poll: string;
 }
 
 // Dashboard Status Summary
